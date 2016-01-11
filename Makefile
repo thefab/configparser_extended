@@ -28,6 +28,7 @@ test:
 	cd tests && nosetests
 
 dev: clean
+	pip install -r test-requirements.txt
 	python setup.py develop
 
 coveralls:
