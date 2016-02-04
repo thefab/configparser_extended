@@ -97,48 +97,53 @@ class BasicTestCase(unittest.TestCase):
         self.assertFalse(self.x.has_option('sect3', 'key4'))
 
     def test_has_option_strict(self):
-        self.assertTrue(self.x.has_option_strict('sect3', 'key3'))
+        self.assertTrue(self.x.has_option('sect3', 'key3', strict=True))
 
     def test_has_option_strict_config(self):
-        self.assertTrue(self.x.has_option_strict('sect3', 'key2', 'dev'))
+        self.assertTrue(self.x.has_option('sect3', 'key2', 'dev', strict=True))
 
     def test_has_option_strict_config_fail(self):
-        self.assertFalse(self.x.has_option_strict('sect3', 'key2', 'scp'))
+        self.assertFalse(self.x.has_option('sect3', 'key2', 'scp',
+                                           strict=True))
 
     def test_has_option_strict_inheritance(self):
         # Because strict
-        self.assertFalse(self.x.has_option_strict('sect1', 'key3'))
+        self.assertFalse(self.x.has_option('sect1', 'key3', strict=True))
 
     def test_has_option_strict_specificaction_fail(self):
         # Because config dependant
-        self.assertFalse(self.x.has_option_strict('sect3', 'key2'))
+        self.assertFalse(self.x.has_option('sect3', 'key2', strict=True))
 
     def test_has_option_strict_fail(self):
-        self.assertFalse(self.x.has_option_strict('sect3', 'key4'))
+        self.assertFalse(self.x.has_option('sect3', 'key4', strict=True))
 
     def test_has_option_config_ind(self):
-        self.assertTrue(self.x.has_option_config_ind('sect3', 'key3'))
+        self.assertTrue(self.x.has_option('sect3', 'key3', cfg_ind=True))
 
     def test_has_option_config_ind_inheritance(self):
-        self.assertTrue(self.x.has_option_config_ind('sect1', 'key3'))
+        self.assertTrue(self.x.has_option('sect1', 'key3', cfg_ind=True))
 
     def test_has_option_config_ind_specificaction(self):
-        self.assertTrue(self.x.has_option_config_ind('sect3', 'key2'))
+        self.assertTrue(self.x.has_option('sect3', 'key2', cfg_ind=True))
 
     def test_has_option_config_ind_fail(self):
-        self.assertFalse(self.x.has_option_config_ind('sect3', 'key4'))
+        self.assertFalse(self.x.has_option('sect3', 'key4', cfg_ind=True))
 
     def test_has_option_strict_config_ind(self):
-        self.assertTrue(self.x.has_option_strict_config_ind('sect3', 'key3'))
+        self.assertTrue(self.x.has_option('sect3', 'key3', cfg_ind=True,
+                                          strict=True))
 
     def test_has_option_strict_config_ind_inheritance(self):
-        self.assertFalse(self.x.has_option_strict_config_ind('sect1', 'key3'))
+        self.assertFalse(self.x.has_option('sect1', 'key3', cfg_ind=True,
+                                           strict=True))
 
     def test_has_option_strict_config_ind_specificaction(self):
-        self.assertTrue(self.x.has_option_strict_config_ind('sect3', 'key2'))
+        self.assertTrue(self.x.has_option('sect3', 'key2', cfg_ind=True,
+                                          strict=True))
 
     def test_has_option_strict_config_ind_fail(self):
-        self.assertFalse(self.x.has_option_strict_config_ind('sect3', 'key4'))
+        self.assertFalse(self.x.has_option('sect3', 'key4', cfg_ind=True,
+                                           strict=True))
 
     def test_options_basic(self):
         res = ['key1', 'key2', 'key2[dev]', 'key2[dev_plop]',
@@ -161,7 +166,7 @@ class BasicTestCase(unittest.TestCase):
         res = ['key1', 'key_int', 'key_bool1', 'key_bool2', 'key_bool3',
                'key_bool4', 'key_bool5', 'key_bool6', 'key_float', 'key_list',
                'key_list_int', 'key_list_bool', 'key_list_float', 'key1[dev]']
-        self.assertEquals(self.x.options_strict('sect1'), res)
+        self.assertEquals(self.x.options('sect1', strict=True), res)
 
     def test_options_strict_defaults(self):
         res = ['key1', 'key_int', 'key_bool1', 'key_bool2', 'key_bool3',
@@ -169,7 +174,8 @@ class BasicTestCase(unittest.TestCase):
                'key_list_int', 'key_list_bool', 'key_list_float', 'key1[dev]',
                'key1[dev_plop_toto_stuff]', 'key2', 'key3', 'key049',
                'key049[dev]']
-        self.assertEquals(self.x.options_strict('sect1', True), res)
+        self.assertEquals(self.x.options('sect1', strict=True, defaults=True),
+                          res)
 
     def test_items_basic(self):
         res = [('key1', 'val1_sect2'),
@@ -238,7 +244,7 @@ class BasicTestCase(unittest.TestCase):
                ('key_list_float', '0.96;1.73;6.82'),
                ('key1[dev]', 'dev1')]
         res.sort()
-        test = self.x.items_strict('sect1')
+        test = self.x.items('sect1', strict=True)
         test.sort()
         self.assertEquals(test, res)
 
@@ -263,7 +269,7 @@ class BasicTestCase(unittest.TestCase):
                ('key049', 'DEFAULT'),
                ('key049[dev]', 'DEFAULT_dev')]
         res.sort()
-        test = self.x.items_strict('sect1', defaults=True)
+        test = self.x.items('sect1', defaults=True, strict=True)
         test.sort()
         self.assertEquals(test, res)
 
@@ -287,7 +293,7 @@ class BasicTestCase(unittest.TestCase):
     def test_items_strict_all(self):
         res = [(key, self.x[key]) for key in self.x._sections]
         res.sort()
-        test = self.x.items_strict()
+        test = self.x.items(strict=True)
         test.sort()
         self.assertEquals(test, res)
 
@@ -308,10 +314,10 @@ class BasicTestCase(unittest.TestCase):
         self.assertRaises(KeyError, lambda: self.x['sect2']['key42'])
 
     def test_has_section_strict(self):
-        self.assertTrue(self.x.has_section_strict('sect2'))
+        self.assertTrue(self.x.has_section('sect2', strict=True))
 
     def test_has_section_strict_fail(self):
-        self.assertFalse(self.x.has_section_strict('sect1'))
+        self.assertFalse(self.x.has_section('sect1', strict=True))
 
     def test_defaults(self):
         self.x = ExtendedConfigParser(defaults={'william': 'Overbeck'})
@@ -378,6 +384,11 @@ class AdvancedTestCase(unittest.TestCase):
         self.x.read('./test_cfg_kwargs.ini')
         self.assertEqual(self.x.get('sect1', 'key2'), 'dev2')
 
+    def test_get_config_plus(self):
+        self.x = ExtendedConfigParser(config='mem_plop_toto')
+        self.x.read('./test_cfg.ini')
+        self.assertEqual(self.x.get('sect3', 'key3', cfg_plus=True), 'toto3')
+
     def test_get_config_section_loop_basic(self):
         self.x = ExtendedConfigParser(config='dev_plop_toto')
         self.x.read('./test_cfg.ini')
@@ -436,6 +447,12 @@ class AdvancedTestCase(unittest.TestCase):
     def test_get_config_section_loop_fail(self):
         self.assertRaises(NoOptionError, self.x.get, 'sect1', 'key682',
                           sect_first=False)
+
+    def test_get_config_section_loop_config_plus(self):
+        self.x = ExtendedConfigParser(config='mem_plop_toto')
+        self.x.read('./test_cfg.ini')
+        self.assertEqual(self.x.get('sect3', 'key3', sect_first=False,
+                         cfg_plus=True), 'toto3')
 
 
 class InheritanceTestCase(unittest.TestCase):
