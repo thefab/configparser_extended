@@ -710,7 +710,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         sect = self.get_section_name(section)
         res = super(ExtendedConfigParser, self).options(sect)
         if(defaults):
-            res += self.default_section.keys() + self.father.keys()
+            res += list(self.default_section.keys()) + list(self.father.keys())
         return res
 
 
