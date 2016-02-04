@@ -6,7 +6,13 @@
 
 import configparser
 from configparser import NoOptionError, NoSectionError
-from collections import OrderedDict
+from backports.configparser.helpers import OrderedDict
+
+
+# Used in parser getters to indicate the default behaviour when a specific
+# option is not found it to raise an exception. Created to enable `None' as
+# a valid fallback value.
+_UNSET = object()
 
 
 class ExtendedConfigParser(configparser.ConfigParser):
@@ -23,30 +29,17 @@ class ExtendedConfigParser(configparser.ConfigParser):
                  defaults=None,
                  dict_type=OrderedDict,
                  allow_no_value=False,
-                 delimiters=('=', ':'),
-                 comment_prefixes=('#', ';'),
-                 inline_comment_prefixes=(';',),
-                 strict=True,
-                 empty_lines_in_values=True,
-                 default_section=configparser.DEFAULTSECT,
-                 interpolation=configparser.BasicInterpolation,
-                 converters=None,
                  config='',
                  config_separator='_',
-                 section_separator=':'
+                 section_separator=':',
+                 **kwargs
                  ):
 
         configparser.ConfigParser.__init__(self,
                                            defaults,
                                            dict_type,
                                            allow_no_value,
-                                           # delimiters,
-                                           # comment_prefixes,
-                                           # inline_comment_prefixes,
-                                           # empty_lines_in_values,
-                                           # default_section,
-                                           # interpolation,
-                                           # converters
+                                           **kwargs
                                            )
         # Prevents the get() method from looking into the DEFAULT section
         # before looking into potential parents
@@ -55,7 +48,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
         self.config_name = config
         self.config_separator = config_separator
         self.section_separator = section_separator
-        self._proxies[default_section] = SectionProxyExtended(self,
+        self._proxies[self.
+                      default_section] = SectionProxyExtended(self,
                                                               configparser.
                                                               DEFAULTSECT)
 
@@ -65,38 +59,172 @@ class ExtendedConfigParser(configparser.ConfigParser):
         self._defaults = {}
 
     def get(self, section, option, raw=False, vars=None,
-            fallback=None):
+            fallback=None, sect_first=True):
         """ Returns the value corresponding to an option in a particular
         section. If vars is provided, it must be a dictionary. The value is
         looked up in vars before being looked up in section. This function
         processes the section name and config name to converte them into valid
-        names and then looks for the option value depending on these names. """
+        names and then looks for the option value depending on these names.
+
+        !!! DO NOT USE, UNDER DEVELOPMENT !!!
+        You can choose if you want to prioritize the section over the config
+        name (sect_first = True) or the config name over the section
+        (sect_first = False) if you absolutely want the value corresponding to
+        the config.
+
+        ex : Looking for 'option1' in 'section1' with a 'toto_titi' config
+
+            [section1:section2]
+            option1[toto]=toto1
+            option1=val1
+
+            [section2]
+            option1[toto_titi]=toto_titi2
+
+        (sect_first = True) : option1 = toto1
+        (sect_first = False) : option1 = toto_titi2"""
+
+        if(sect_first):
+            return self.section_config_loop(section, option, raw, vars,
+                                            fallback)
+        else:
+            return self.config_section_loop(section, option, raw, vars,
+                                            fallback)
+
+    def section_config_loop(self, section, option, raw=False, vars=None,
+                            fallback=None):
+        """ Loops on the configs inside a section
+
+        run ex :
+             Look for option with and without config name in vars
+             Look for option with and without config name in section1:section2
+             Look for option with and without config name in section2
+             Look for option with and without config name in DEFAULT
+             Look for option with and without config name in defaults
+        """
 
         result = None
         sections = self.get_corresponding_sections(section)
         configs = self.get_configs()
 
         if(vars is not None):
+            for c in configs:
+                if (vars.get(option + '[' + c + ']') is not None):
+                    return vars.get(option + '[' + c + ']')
             if (vars.get(option) is not None):
-                return vars.get(option)
+                    return vars.get(option)
 
         # Loop on the list of sections
         for s in sections:
+            # Loop on the config names
+            for c in configs:
+                try:
+                    result = self.find_option(s, option, raw, c)
+                    if(result is not None):
+                        result = self.convert_value_list(result)
+                        return result
+                except NoOptionError:
+                    pass
 
+            # Look for the option without any specific config name
             try:
-                # Loop on the config names
-                for c in configs:
-                    try:
-                        result = self.find_option(s, option, raw, c)
-                        if(result is not None):
-                            result = self.convert_value_list(result)
-                            print '*** sect : ' + str(s) + ' ; cfg : ' + \
-                                  str(c) + ' ; res : ' + str(result) + ' ***'
-                            return result
-                    except NoOptionError:
-                        pass
+                result = self.find_option(s, option, raw)
+                if(result is not None):
+                    result = self.convert_value_list(result)
+                    return result
+            except NoOptionError:
+                pass
 
-                # Look for the option without any specific config name
+        # Look for the option in the DEFAULT section, in defaults and, finally,
+        # in fallback
+        for c in configs:
+            if(result is None):
+                if(option in self.default_section):
+                    result = self.default_section.get(option + '[' + c + ']')
+                    break
+
+        for c in configs:
+            if(result is None):
+                if(option in self.father):
+                    result = self.father.get(option + '[' + c + ']')
+                    break
+
+        if(result is None):
+            if(option in self.default_section):
+                result = self.default_section.get(option)
+
+        if(result is None):
+            if(option in self.father):
+                result = self.father.get(option)
+
+        if(result is None):
+            result = fallback
+
+        if(result is None):
+            # If nothing has been found, raise an exception
+            raise NoOptionError(option, section)
+
+        result = self.convert_value_list(result)
+        return result
+
+    def config_section_loop(self, section, option, raw=False, vars=None,
+                            fallback=None):
+        """ !!! DO NOT USE, UNDER DEVELOPMENT !!!
+
+        Loops on the sections per config name
+
+        run ex :
+             Look for option[cfg1] in every section
+             Look for option[cfg2] in every section
+             Look for option in every section
+        """
+
+        result = None
+        sections = self.get_corresponding_sections(section)
+        configs = self.get_configs()
+
+        # Loop on the config names
+        for c in configs:
+            if(vars is not None):
+                print("VARS")
+                if (vars.get(option + '[' + c + ']') is not None):
+                    return vars.get(option + '[' + c + ']')
+
+            # Loop on the list of sections
+            for s in sections:
+                print("s : " + s + "; c : " + c)
+                try:
+                    result = self.find_option(s, option, raw, c)
+                    if(result is not None):
+                        result = self.convert_value_list(result)
+                        return result
+                except NoOptionError:
+                    pass
+
+            # Look for the option in the DEFAULT section, in defaults
+            if(result is None):
+                print ("DEFAULT")
+                if(option + '[' + c + ']' in self.default_section):
+                    print ("s : DEFAULT; c : " + c)
+                    result = self.default_section.get(option + '[' + c + ']')
+                    break
+
+            if(result is None):
+                print("FATHER")
+                if(option + '[' + c + ']' in self.father):
+                    result = self.father.get(option + '[' + c + ']')
+                    break
+
+        if(result is None):
+            # Look for the option without any specific config name
+            if(vars is not None):
+                print("VARS UNDEF")
+                if (vars.get(option) is not None):
+                    return vars.get(option)
+
+            # Loop on the list of sections
+            for s in sections:
+                print("s : " + s + "; c : UNDEF")
                 try:
                     result = self.find_option(s, option, raw)
                     if(result is not None):
@@ -105,21 +233,17 @@ class ExtendedConfigParser(configparser.ConfigParser):
                 except NoOptionError:
                     pass
 
-            except NoSectionError:
-                pass
+            # Look for the option in the DEFAULT section, in defaults and,
+            # finally, in fallback
+            if(result is None):
+                if(option in self.default_section):
+                    result = self.default_section.get(option)
+
+            if(result is None):
+                if(option in self.father):
+                    result = self.father.get(option)
 
         if(result is None):
-            if(option in self.default_section):
-                print 'Die Fult'
-                result = self.default_section.get(option)
-
-        if(result is None):
-            if(option in self.father):
-                print 'You just got Father\'ed'
-                result = self.father.get(option)
-
-        if(result is None):
-            print 'Fall back!'
             result = fallback
 
         if(result is None):
@@ -134,12 +258,11 @@ class ExtendedConfigParser(configparser.ConfigParser):
         already been processed/converted into valid names. It functions just as
         get() does while being able to return a result associated with a config
         name. """
+
         try:
             # If no config name is precised, look for the option without
             # "[config]"
             if(config == ''):
-                print '***** section : ' + section + '; option : ' + option + \
-                      ' *****'
                 return super(ExtendedConfigParser, self).get(section, option,
                                                              raw=raw)
 
@@ -147,8 +270,6 @@ class ExtendedConfigParser(configparser.ConfigParser):
             # a pair of brackets (ex : key1[config1]=val1 )
             # NoSectionError raised by get_no_def()
             else:
-                print '***** section : ' + section + '; option : ' + option + \
-                      '[' + config + '] *****'
                 return super(ExtendedConfigParser, self).get(section, option
                                                              + '[' + config +
                                                              ']', raw=raw)
@@ -159,7 +280,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
     def get_corresponding_sections(self, section):
         """ Look for the actual name of the section if it inherits from other
         sections and stores the section name itself as well as its parents
-        present in the read source """
+        present in the read source. """
+
         # Find the corresponding section if it inherits from another section
         sect = self.get_section_name(section)
 
@@ -178,15 +300,12 @@ class ExtendedConfigParser(configparser.ConfigParser):
         for s in section_splitted:
             if s in self._sections:
                 sections.append(s)
-
-        # If the list of corresponding sections is empty, raise an exception
-        if(not sections):
-            raise NoSectionError(section)
         return sections
 
     def get_section_name(self, section):
         """ Returns the actual name of the section inside the read source if
-        it inherits from some other source """
+        it inherits from some other source. """
+
         if(section in self._sections):
             return section
 
@@ -204,6 +323,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """ Returns a config name and its direct parents.
 
         ex : foo_bar_baz, foo_bar, foo"""
+
         configs = []
         if(config != '' and config is not None):
             config_name_edited = config
@@ -256,7 +376,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
     def convert_value_list(self, val):
         """ Converts a value into a List if it contains ';' or returns the
-        value if it doesn't """
+        value if it doesn't. """
+
         if(';' in val):
             list_val = val.split(';')
             return list_val
@@ -265,7 +386,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
     def getint(self, section, option, raw=False, vars=None,
                fallback=None):
-        """ Returns the value of an option as an integer """
+        """ Returns the value of an option as an integer. """
+
         res = self.get(section, option, raw, vars, fallback)
         if(self.is_list(res)):
             res = [int(i) for i in res]
@@ -275,7 +397,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
     def getfloat(self, section, option, raw=False, vars=None,
                  fallback=None):
-        """ Returns the value of an option as an double """
+        """ Returns the value of an option as an double. """
+
         res = self.get(section, option, raw, vars, fallback)
         if(self.is_list(res)):
             res = [float(i) for i in res]
@@ -285,7 +408,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
     def getboolean(self, section, option, raw=False, vars=None,
                    fallback=None):
-        """ Returns the value of an option as a boolean """
+        """ Returns the value of an option as a boolean. """
+
         res = self.get(section, option, raw, vars, fallback)
         if(self.is_list(res)):
             res = [self.str_to_bool(i) for i in res]
@@ -295,7 +419,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
     def str_to_bool(self, string):
         """ Returns True if the lowered string is "true", "yes", "on" or "1".
-        Returns False otherwise"""
+        Returns False otherwise. """
+
         res = False
         string = string.lower()
         if(string == 'true' or string == 'yes' or string == 'on' or
@@ -316,12 +441,41 @@ class ExtendedConfigParser(configparser.ConfigParser):
         self.config_name = config
 
     def read(self, filenames):
+        """Read and parse a filename or a list of filenames.
+
+        Files that cannot be opened are silently ignored; this is
+        designed so that you can specify a list of potential
+        configuration file locations (e.g. current directory, user's
+        home directory, systemwide directory), and all existing
+        configuration files in the list will be read.  A single
+        filename may also be given.
+
+        Return list of successfully read files.
+        """
+
         filenames = unicode(filenames, 'utf-8')
-        configparser.ConfigParser.read(self, filenames)
+        super(ExtendedConfigParser, self).read(filenames)
+        self.move_defaults()
+
+    def read_file(self, f, source=None):
+        """Like read() but the argument must be a file-like object.
+
+        The `f' argument must be iterable, returning one line at a time.
+        Optional second argument is the `source' specifying the name of the
+        file being read. If not given, it is taken from f.name. If `f' has no
+        `name' attribute, `<???>' is used.
+        """
+
+        super(ExtendedConfigParser, self).read_file(f, source)
+        self.move_defaults()
+
+    def move_defaults(self):
+        """ Transfers the content from the DEFAULT section to
+        self.default_section to prevent get() from returning DEFAULT
+        option values instead of parent option values and "converts"
+        SectionProxies to SectionProxiesExtended. """
+
         try:
-            # Transfer the content from the DEFAULT section to
-            # self.default_section to prevent get() from returning DEFAULT
-            # option values instead of parent option values
             self.default_section = self._sections['DEFAULT'].copy()
             del self._sections['DEFAULT']
         except KeyError:
@@ -333,7 +487,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
     def has_option(self, section, option, config=''):
         """ Returns True if the option is explicitly defined in the section or
         inherited from another section for the current config name (or for the
-        config name precised in the parameters) and returns False otherwise"""
+        config name precised in the parameters) and returns False otherwise."""
 
         if(self.has_section(section)):
             sections = self.get_corresponding_sections(section)
@@ -343,7 +497,6 @@ class ExtendedConfigParser(configparser.ConfigParser):
                 configs = self.get_configs()
             for s in sections:
                 for c in configs:
-                    print "[" + s + " ; " + c + "]"
                     res = super(ExtendedConfigParser, self).has_option(s,
                                                                        option +
                                                                        '[' + c
@@ -351,9 +504,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
                     if(res):
                         return True
 
-                print "[" + s + " ; ]"
-                res = super(ExtendedConfigParser, self).has_option(s,
-                                                                   option)
+                res = super(ExtendedConfigParser, self).has_option(s, option)
                 if(res):
                     return True
             return False
@@ -361,7 +512,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
     def has_option_strict(self, section, option, config=''):
         """ Returns True only if the option is explicitly defined in the
         section for the current config name (or for the config name precised in
-        the parameters) and returns Flase otherwise"""
+        the parameters) and returns False otherwise. """
 
         sect = self.get_section_name(section)
         if(self.has_section(section)):
@@ -384,7 +535,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
     def has_option_config_ind(self, section, option, config=''):
         """ Returns True if the option is explicitly defined in the section or
         inherited from another section, independantly of the config name, and
-        returns False otherwise"""
+        returns False otherwise. """
 
         if(self.has_section(section)):
             sections = self.get_corresponding_sections(section)
@@ -401,7 +552,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
     def has_option_strict_config_ind(self, section, option, config=''):
         """ Returns True only if the option is explicitly defined in the
-        section, independantly of the config name, and returns False otherwise
+        section, independantly of the config name, and returns False otherwise.
         """
 
         if(self.has_section(section)):
@@ -418,7 +569,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
     def has_section(self, section):
         """ Checks if there is a section associated with the section name
-        entered
+        entered.
         ex : self.has_section('sect1') will return True if 'sect1:sect2' exists
         """
 
@@ -430,12 +581,13 @@ class ExtendedConfigParser(configparser.ConfigParser):
             return False
 
     def has_section_strict(self, section):
-        """ Checks if the section name entered exists """
+        """ Checks if the section name entered exists. """
 
-        super(ExtendedConfigParser, self).has_section(section)
+        return section in self._sections
 
     def add_section(self, section):
-        super(ExtendedConfigParser, self).add_section(self, section)
+        section = unicode(section, 'utf-8')
+        super(ExtendedConfigParser, self).add_section(section)
         self._proxies[section] = SectionProxyExtended(self, section)
 
     def __getitem__(self, key):
@@ -448,9 +600,86 @@ class ExtendedConfigParser(configparser.ConfigParser):
     def defaults(self):
         return self.father
 
+    def items(self, section=_UNSET, raw=False, vars=None):
+        """Returns a list of (name, value) tuples for each option in a section
+        and all of its parents.
+
+        All % interpolations are expanded in the return values, based on the
+        defaults passed into the constructor, unless the optional argument
+        `raw' is true.  Additional substitutions may be provided using the
+        `vars' argument, which must be a dictionary whose contents overrides
+        any pre-existing defaults.
+
+        The section DEFAULT is special.
+        """
+
+        res = []
+        if(section is None or section is _UNSET):
+            res = self.items_empty()
+        else:
+            sections = self.get_corresponding_sections(section)
+            for s in sections:
+                res += (super(ExtendedConfigParser, self).items(s, raw,
+                                                                vars))
+            defaults = (list(self.default_section.items()) +
+                        list(self.father.items()))
+            res += (defaults)
+        return res
+
+    def items_strict(self, section=_UNSET, raw=False, vars=None,
+                     defaults=False):
+        """Returns a list of (name, value) tuples for each option in a section
+        excluding its parents. If defaults is True though, the DEFAULT section
+        will be included.
+
+        All % interpolations are expanded in the return values, based on the
+        defaults passed into the constructor, unless the optional argument
+        `raw' is true.  Additional substitutions may be provided using the
+        `vars' argument, which must be a dictionary whose contents overrides
+        any pre-existing defaults.
+
+        The section DEFAULT is special.
+        """
+
+        if(defaults):
+            self._defaults.update(self.father)
+            self._defaults.update(self.default_section)
+        if(section is None or section is _UNSET):
+            res = self.items_empty()
+        else:
+            sect = self.get_section_name(section)
+            res = super(ExtendedConfigParser, self).items(sect, raw, vars)
+        self._defaults = {}
+        return res
+
+    def items_empty(self):
+        return [(sect, self[sect]) for sect in self._sections]
+
+    def options(self, section):
+        """ Returns a list of option names for the given section and its
+        parents. """
+
+        res = []
+        sections = self.get_corresponding_sections(section)
+        for s in sections:
+            res += super(ExtendedConfigParser, self).options(s)
+        res += self.default_section.keys() + self.father.keys()
+        return res
+
+    def options_strict(self, section, defaults=False):
+        """ Returns a list of option names for the given section only. If
+        defaults is True, DEFAULT options will be included. """
+
+        sect = self.get_section_name(section)
+        res = super(ExtendedConfigParser, self).options(sect)
+        if(defaults):
+            res += self.default_section.keys() + self.father.keys()
+        return res
+
 
 class SectionProxyExtended(configparser.SectionProxy):
-    """A proxy for a single section from a parser."""
+    """ A proxy for a single section from a parser. Designed to support
+    inheritance. """
 
     def __init__(self, parser, name):
         self._parser = parser
@@ -458,6 +687,6 @@ class SectionProxyExtended(configparser.SectionProxy):
 
     def __getitem__(self, key):
         try:
-            return super(SectionProxyExtended, self).__getitem__(key)
+            return self._parser.get(self._name, key)
         except NoOptionError:
             raise KeyError(key)
