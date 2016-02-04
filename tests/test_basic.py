@@ -4,7 +4,7 @@
 import unittest
 from configparser import NoOptionError, NoSectionError
 from configparser_extended import ExtendedConfigParser
-from collections import OrderedDict
+from backports.configparser.helpers import OrderedDict
 
 
 class BasicTestCase(unittest.TestCase):

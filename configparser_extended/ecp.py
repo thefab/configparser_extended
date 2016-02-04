@@ -7,6 +7,7 @@
 import configparser
 from configparser import NoOptionError, NoSectionError
 from backports.configparser.helpers import OrderedDict
+from six import u
 
 
 # Used in parser getters to indicate the default behaviour when a specific
@@ -186,13 +187,11 @@ class ExtendedConfigParser(configparser.ConfigParser):
         # Loop on the config names
         for c in configs:
             if(vars is not None):
-                print("VARS")
                 if (vars.get(option + '[' + c + ']') is not None):
                     return vars.get(option + '[' + c + ']')
 
             # Loop on the list of sections
             for s in sections:
-                print("s : " + s + "; c : " + c)
                 try:
                     result = self.find_option(s, option, raw, c)
                     if(result is not None):
@@ -203,14 +202,11 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
             # Look for the option in the DEFAULT section, in defaults
             if(result is None):
-                print ("DEFAULT")
                 if(option + '[' + c + ']' in self.default_section):
-                    print ("s : DEFAULT; c : " + c)
                     result = self.default_section.get(option + '[' + c + ']')
                     break
 
             if(result is None):
-                print("FATHER")
                 if(option + '[' + c + ']' in self.father):
                     result = self.father.get(option + '[' + c + ']')
                     break
@@ -218,13 +214,11 @@ class ExtendedConfigParser(configparser.ConfigParser):
         if(result is None):
             # Look for the option without any specific config name
             if(vars is not None):
-                print("VARS UNDEF")
                 if (vars.get(option) is not None):
                     return vars.get(option)
 
             # Loop on the list of sections
             for s in sections:
-                print("s : " + s + "; c : UNDEF")
                 try:
                     result = self.find_option(s, option, raw)
                     if(result is not None):
@@ -453,7 +447,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         Return list of successfully read files.
         """
 
-        filenames = unicode(filenames, 'utf-8')
+        filenames = u(filenames)
         super(ExtendedConfigParser, self).read(filenames)
         self.move_defaults()
 
@@ -586,7 +580,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return section in self._sections
 
     def add_section(self, section):
-        section = unicode(section, 'utf-8')
+        section = u(section)
         super(ExtendedConfigParser, self).add_section(section)
         self._proxies[section] = SectionProxyExtended(self, section)
 
