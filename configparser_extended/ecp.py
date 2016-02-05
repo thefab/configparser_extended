@@ -116,28 +116,18 @@ class ExtendedConfigParser(configparser.ConfigParser):
                 if (vars.get(option + '[' + c + ']') is not None):
                     return vars.get(option + '[' + c + ']')
             if (vars.get(option) is not None):
-                    return vars.get(option)
+                return vars.get(option)
 
         # Loop on the list of sections
         for s in sections:
             # Loop on the config names
             for c in configs:
-                try:
-                    result = self.find_option(s, option, raw, c)
-                    if(result is not None):
-                        result = self.convert_value_list(result)
-                        return result
-                except NoOptionError:
-                    pass
+                if(self.get_result(s, option, raw, c) is not None):
+                    return self.get_result(s, option, raw, c)
 
             # Look for the option without any specific config name
-            try:
-                result = self.find_option(s, option, raw)
-                if(result is not None):
-                    result = self.convert_value_list(result)
-                    return result
-            except NoOptionError:
-                pass
+            if(self.get_result(s, option, raw) is not None):
+                    return self.get_result(s, option, raw)
 
         # Look for the option in the DEFAULT section, in defaults and, finally,
         # in fallback
@@ -196,13 +186,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
             # Loop on the list of sections
             for s in sections:
-                try:
-                    result = self.find_option(s, option, raw, c)
-                    if(result is not None):
-                        result = self.convert_value_list(result)
-                        return result
-                except NoOptionError:
-                    pass
+                if(self.get_result(s, option, raw, c) is not None):
+                    return self.get_result(s, option, raw, c)
 
             # Look for the option in the DEFAULT section, in defaults
             if(result is None):
@@ -223,13 +208,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
             # Loop on the list of sections
             for s in sections:
-                try:
-                    result = self.find_option(s, option, raw)
-                    if(result is not None):
-                        result = self.convert_value_list(result)
-                        return result
-                except NoOptionError:
-                    pass
+                if(self.get_result(s, option, raw) is not None):
+                    return self.get_result(s, option, raw)
 
             # Look for the option in the DEFAULT section, in defaults and,
             # finally, in fallback
@@ -250,6 +230,24 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
         result = self.convert_value_list(result)
         return result
+
+    def get_result(self, s, option, raw=False, c=''):
+        if(c == '' or c is None):
+            try:
+                result = self.find_option(s, option, raw)
+                if(result is not None):
+                    result = self.convert_value_list(result)
+                    return result
+            except NoOptionError:
+                pass
+        else:
+            try:
+                result = self.find_option(s, option, raw, c)
+                if(result is not None):
+                    result = self.convert_value_list(result)
+                    return result
+            except NoOptionError:
+                pass
 
     def find_option(self, section, option, raw=False, config=''):
         """ Returns the result of a basic get() where section and config have
@@ -438,7 +436,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
     def set_config_name(self, config):
         self.config_name = config
 
-    def read(self, filenames):
+    def read(self, filenames, encoding=None):
         """Read and parse a filename or a list of filenames.
 
         Files that cannot be opened are silently ignored; this is
@@ -452,7 +450,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """
 
         filenames = u(filenames)
-        super(ExtendedConfigParser, self).read(filenames)
+        super(ExtendedConfigParser, self).read(filenames, encoding)
         self.move_defaults()
 
     def read_file(self, f, source=None):
