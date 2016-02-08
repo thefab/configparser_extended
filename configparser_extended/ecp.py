@@ -127,7 +127,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
             # Look for the option without any specific config name
             if(self.get_result(s, option, raw) is not None):
-                    return self.get_result(s, option, raw)
+                return self.get_result(s, option, raw)
 
         # Look for the option in the DEFAULT section, in defaults and, finally,
         # in fallback
@@ -178,27 +178,31 @@ class ExtendedConfigParser(configparser.ConfigParser):
         else:
             configs = self.get_configs_plus()
 
-        # Loop on the config names
-        for c in configs:
-            if(vars is not None):
-                if (vars.get(option + '[' + c + ']') is not None):
-                    return vars.get(option + '[' + c + ']')
+        if(self.config_name != '' and self.config_name is not None):
+            # Loop on the config names
+            for c in configs:
 
-            # Loop on the list of sections
-            for s in sections:
-                if(self.get_result(s, option, raw, c) is not None):
-                    return self.get_result(s, option, raw, c)
+                # Search into vars
+                if(vars is not None):
+                    if (vars.get(option + '[' + c + ']') is not None):
+                        return vars.get(option + '[' + c + ']')
 
-            # Look for the option in the DEFAULT section, in defaults
-            if(result is None):
-                if(option + '[' + c + ']' in self.default_section):
-                    result = self.default_section.get(option + '[' + c + ']')
-                    break
+                # Loop on the list of sections
+                for s in sections:
+                    if(self.get_result(s, option, raw, c) is not None):
+                        return self.get_result(s, option, raw, c)
 
-            if(result is None):
-                if(option + '[' + c + ']' in self.father):
-                    result = self.father.get(option + '[' + c + ']')
-                    break
+                # Look for the option in the DEFAULT section, in defaults
+                if(result is None):
+                    if(option + '[' + c + ']' in self.default_section):
+                        result = self.default_section.get(option + '[' + c +
+                                                          ']')
+                        break
+
+                if(result is None):
+                    if(option + '[' + c + ']' in self.father):
+                        result = self.father.get(option + '[' + c + ']')
+                        break
 
         if(result is None):
             # Look for the option without any specific config name
@@ -415,14 +419,18 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
     def str_to_bool(self, string):
         """ Returns True if the lowered string is "true", "yes", "on" or "1".
-        Returns False otherwise. """
+        Returns False if the lowered string is "false", "no", "off" or "0".
+        Raises ValueError otherwise """
 
-        res = False
         string = string.lower()
         if(string == 'true' or string == 'yes' or string == 'on' or
            string == '1'):
-            res = True
-        return res
+            return True
+        elif(string == 'false' or string == 'no' or string == 'off' or
+             string == '0'):
+            return False
+        else:
+            raise ValueError(string)
 
     def is_list(self, res):
         if isinstance(res, list):
@@ -626,7 +634,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
               strict=False, defaults=False):
         """ Returns a list of (name, value) tuples for each option in a section
         excluding its parents. If defaults is True though, the DEFAULT section
-        will be included.
+        will be included. When section is not given, return a list of
+        section_name, section_proxy pairs, including DEFAULTSECT.
 
         All % interpolations are expanded in the return values, based on the
         defaults passed into the constructor, unless the optional argument
@@ -677,6 +686,9 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return res
 
     def _items_empty(self):
+        """ Returns a list of section_name, section_proxy pairs, including
+        DEFAULTSECT. """
+
         return [(sect, self[sect]) for sect in self._sections]
 
     def options(self, section, strict=False, defaults=False):

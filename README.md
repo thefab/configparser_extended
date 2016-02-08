@@ -7,7 +7,7 @@
 [![Code Health](https://landscape.io/github/thefab/configparser_extended/master/landscape.png)](https://landscape.io/github/thefab/configparser_extended/master)
 [![Requirements Status](https://requires.io/github/thefab/configparser_extended/requirements.png?branch=master)](https://requires.io/github/thefab/configparser_extended/requirements/?branch=master)
 
-**WARNING : it is strongly advised to read the original ConfigParser documentation if you're a beginner**
+**WARNING : it is STRONGLY advised to read the original ConfigParser documentation if you're a beginner**
 
 ## What is it ?
 
@@ -51,33 +51,33 @@ Inheritance is also available for configuration names as well. This allows you t
 
 From this config file, we can obtain different values depending on the config name :
 
-- for the 'server' configuration, the values for the 3 options will be :
+- for the `server` configuration, the values for the 3 options will be :
 
-    [section1]
-    option1[server]=server1
-    option2[server]=server2
-    option3[server]=server3
+        [section1]
+        option1[server]=server1
+        option2[server]=server2
+        option3[server]=server3
 
-- for the 'server_usa' configuration, the values for the 3 options will be :
+- for the `server_usa` configuration, the values for the 3 options will be :
 
-    [section1]
-    option1[server]=server1
-    option2[server]=server2
-    option3[server]=server3
+        [section1]
+        option1[server]=server1
+        option2[server]=server2
+        option3[server]=server3
 
-- for the 'server_eu_gb' configuration, the values for the 3 options will be :
+- for the `server_eu_gb` configuration, the values for the 3 options will be :
 
-    [section1]
-    option1[server_eu]=server_eu1
-    option2[server_eu]=server_eu2
-    option3[server]=server3
+        [section1]
+        option1[server_eu]=server_eu1
+        option2[server_eu]=server_eu2
+        option3[server]=server3
 
 - for the `server_eu_fr` configuration, the values for the 3 options will be :
 
-    [section1]
-    option1[server_eu_fr]=server_eu_fr1
-    option2[server_eu]=server_eu2
-    option3[server]=server3
+        [section1]
+        option1[server_eu_fr]=server_eu_fr1
+        option2[server_eu]=server_eu2
+        option3[server]=server3
 
 Basically, with a `foo_bar_baz` configuration name, ConfigParserExtended will look for :
 
@@ -150,7 +150,7 @@ The value of `option1` for `section1` will be `val1` here. However, if you want 
 
 ### Syntax
 
-**Syntax : `[grandparent:parent:child]**
+**Syntax : `[child:parent:grandparent]**
 
 Note that the separator ':' is customizable via the constructor
 
@@ -162,7 +162,7 @@ Some methods have been adapted to this new functionnalities by adding options to
 
 This function has now 3 additional optional parameters :
 
-- `config` : enter a configuration name to use `has_option` for this specific name
+- `config` : enter a configuration name to use `has_option` for this specific configuration name
 
 - `cfg_ind` : if True, the function will return True if the option has been found, regardless of the specified configuration name. If False (default), the function will return True only if the option has been found either without specification, or specified with the current configuration name (or `config` if set).
 

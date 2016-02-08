@@ -3,7 +3,7 @@
 
 import unittest
 from configparser import NoOptionError, NoSectionError
-from configparser_extended import ExtendedConfigParser
+from configparser_extended import ExtendedConfigParser, SectionProxyExtended
 from backports.configparser.helpers import OrderedDict
 
 
@@ -47,7 +47,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertFalse(self.x.getboolean('sect1', 'key_bool5'))
 
     def test_get_boolean_random(self):
-        self.assertFalse(self.x.getboolean('sect1', 'key_bool6'))
+        self.assertRaises(ValueError, self.x.getboolean, 'sect1', 'key_bool6')
 
     def test_default(self):
         self.assertEqual(self.x.get('sect3', 'key2'), 'default2')
@@ -273,36 +273,50 @@ class BasicTestCase(unittest.TestCase):
         test.sort()
         self.assertEquals(test, res)
 
-    #
-    #
-    #   FIX ME : Find another way to test
-    #
-    #
     def test_items_all(self):
-        res = [(key, self.x[key]) for key in self.x._sections]
+        res = []
+        for key in self.x._sections:
+            res.append((key, SectionProxyExtended(self.x, key)))
         res.sort()
         test = self.x.items()
         test.sort()
         self.assertEquals(test, res)
 
-    #
-    #
-    #   FIX ME : Find another way to test
-    #
-    #
     def test_items_strict_all(self):
-        res = [(key, self.x[key]) for key in self.x._sections]
+        res = []
+        for key in self.x._sections:
+            res.append((key, SectionProxyExtended(self.x, key)))
         res.sort()
         test = self.x.items(strict=True)
         test.sort()
         self.assertEquals(test, res)
 
-    """def test_items_strict_all(self):
-        res = [('DEFAULT', <Section: DEFAULT>),
-               ('sect1:sect2:sect3', <Section: sect1:sect2:sect3>),
-               ('sect2', <Section: sect2>),
-               ('sect3', <Section: sect3>)]
-        self.assertEquals(self.x.items(), res)"""
+    def test_items_vars(self):
+        res = [('william', 'Overbeck'),
+               ('key1', 'val1_sect2'),
+               ('key2', 'val2'),
+               ('key2[dev]', 'dev2'),
+               ('key2[dev_plop]', 'dev_plop2'),
+               ('key1[dev_plop_toto_stuff]', 'dev_plop_toto1_default'),
+               ('key2', 'default2'),
+               ('key3', 'default3'),
+               ('key049', 'DEFAULT'),
+               ('key049[dev]', 'DEFAULT_dev')]
+        res.sort()
+        test = self.x.items('sect2', vars={'William': 'Overbeck'})
+        test.sort()
+        self.assertEquals(test, res)
+
+    def test_items_vars_strict(self):
+        res = [('william', 'Overbeck'),
+               ('key1', 'val1_sect2'),
+               ('key2', 'val2'),
+               ('key2[dev]', 'dev2'),
+               ('key2[dev_plop]', 'dev_plop2')]
+        res.sort()
+        test = self.x.items('sect2', vars={'William': 'Overbeck'}, strict=True)
+        test.sort()
+        self.assertEquals(test, res)
 
     def test_get_key_dict(self):
         self.assertEqual(self.x['sect2']['key2'], 'val2')
@@ -417,6 +431,12 @@ class AdvancedTestCase(unittest.TestCase):
 
     def test_get_config_section_loop_vars(self):
         self.x = ExtendedConfigParser(config='mem_plop_toto_stuff')
+        self.x.read('./test_cfg.ini')
+        self.assertEqual(self.x.get('sect2', 'key1', sect_first=False,
+                                    vars={'key1': 'vars'}), 'vars')
+
+    def test_get_config_section_loop_vars_unspecified(self):
+        self.x = ExtendedConfigParser()
         self.x.read('./test_cfg.ini')
         self.assertEqual(self.x.get('sect2', 'key1', sect_first=False,
                                     vars={'key1': 'vars'}), 'vars')

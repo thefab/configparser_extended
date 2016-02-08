@@ -5,7 +5,8 @@
 # released under the MIT license.
 # See the LICENSE file for more information.
 
-from configparser_extended.ecp import ExtendedConfigParser
+from configparser_extended.ecp import ExtendedConfigParser, \
+    SectionProxyExtended
 
 
-__all__ = ['ExtendedConfigParser', ]
+__all__ = ['ExtendedConfigParser', 'SectionProxyExtended']
