@@ -1,13 +1,13 @@
 # configparser_extended
 
+**WARNING : it is STRONGLY advised to read the original ConfigParser documentation if you're a beginner**
+
 ## Status (master branch)
 
 [![Build Status](https://travis-ci.org/thefab/configparser_extended.png)](https://travis-ci.org/thefab/configparser_extended)
 [![Coverage Status](https://coveralls.io/repos/thefab/configparser_extended/badge.png)](https://coveralls.io/r/thefab/configparser_extended)
 [![Code Health](https://landscape.io/github/thefab/configparser_extended/master/landscape.png)](https://landscape.io/github/thefab/configparser_extended/master)
 [![Requirements Status](https://requires.io/github/thefab/configparser_extended/requirements.png?branch=master)](https://requires.io/github/thefab/configparser_extended/requirements/?branch=master)
-
-**WARNING : it is STRONGLY advised to read the original ConfigParser documentation if you're a beginner**
 
 ## What is it ?
 
@@ -79,14 +79,14 @@ From this config file, we can obtain different values depending on the config na
         option2[server_eu]=server_eu2
         option3[server]=server3
 
-Basically, with a `foo_bar_baz` configuration name, ConfigParserExtended will look for :
+Basically, with a `foo_bar_baz` configuration name, ConfigParserExtended will search for :
 
 1. `option[foo_bar_baz]`
 2. `option[foo_bar]`
 3. `option[foo]`
 4. `option`
 
-There is also another "version" of this function which will look for :
+There is also another "version" of this function which will search for :
 
 1. `option[foo_bar_baz]`
 2. `option[bar_baz]`
@@ -96,7 +96,7 @@ There is also another "version" of this function which will look for :
 6. `option[foo]`
 7. `option`
 
-You can use this version via the `get()` method by setting the `sect_first` parameter to false.
+You can use this version via the `get()` method by setting the `cfg_plus` parameter to `True`.
 
 ### Syntax
 
@@ -146,7 +146,7 @@ In ConfigParserExtended, by default, the search using configuration names is don
     [section2]
     option1[dev]=dev1
 
-The value of `option1` for `section1` will be `val1` here. However, if you want to get `dev1` instead of `val1` with the same parameters, you can set the `sect_first` parameter to `False` in the `get()` method.
+The value of `option1` for `section1` will be `val1` here. However, if you want to get `dev1` instead of `val1` with the same parameters, you can set the `sect_first` parameter to `False` in the `get()` method, which will prioritize the configuration name over the section name.
 
 ### Syntax
 
@@ -156,19 +156,19 @@ Note that the separator ':' is customizable via the constructor
 
 ## Miscellaneous
 
-Some methods have been adapted to this new functionnalities by adding options to take in account option specification and inheritance, or not. Keep in mind that these methods have the exact same roles as in the original ConfigParser.
+Some methods have been adapted to these new functionnalities by adding options to take into account option specification and inheritance. These options allow yout to activate or deactivate the new functionalities. Keep in mind that these methods have the exact same roles as in the original ConfigParser (if not, feel free to report it).
 
 ### `has_option()`
 
-This function has now 3 additional optional parameters :
+This function has now 3 additional **optional** parameters :
 
 - `config` : enter a configuration name to use `has_option` for this specific configuration name
 
-- `cfg_ind` : if True, the function will return True if the option has been found, regardless of the specified configuration name. If False (default), the function will return True only if the option has been found either without specification, or specified with the current configuration name (or `config` if set).
+- `cfg_ind` : if True, the function will return True if the option has been found, regardless of the specified configuration name. If False (default), the function will return True only if the option has been found either without specification, or specified with the current configuration name (or with `config`, if set).
 
-- `strict` : if True, the function will only search the given section, but neither the parent section(s) nor the `DEFAULT` section will be searched. If False (default), the given section will be searched as well as its parent(s) and the `DEFAULT` section.
+- `strict` : if True, the function will only search the given section, neither the parent section(s) nor the `DEFAULT` section will be searched. If False (default), the given section will be searched as well as its parent(s) and the `DEFAULT` section.
 
-A little example with a `aye` config name using `has_option('section1',option1):
+A little example with a `aye` config name using `has_option('section1',option1)`:
 
     [section1:section2]
     option1[nope]=nope1
@@ -176,19 +176,24 @@ A little example with a `aye` config name using `has_option('section1',option1):
     [section2]
     option1=val1
 
-- `strict=False` ; `cfg_ind=False`  =>  return `True`
+- `strict=False` ; `cfg_ind=False`  =>  return `True` 
+(found in section2)
 
-- `strict=True` ; `cfg_ind=False`  =>  return `False`
+- `strict=True` ; `cfg_ind=False`  =>  return `False` 
+(didn't find `option1[aye]` or `option1` in section 1)
 
-- `strict=True` ; `cfg_ind=False` ; `config=nope`  =>  return `True`
+- `strict=True` ; `cfg_ind=False` ; `config=nope`  =>  return `True` 
+(found `option[nope]` in section 1)
 
 - `strict=False` ; `cfg_ind=True`  =>  return `True`
+(found an option1 in section1)
 
-- `strict=True` ; `cfg_ind=True`  =>  return `True`
+- `strict=True` ; `cfg_ind=True`  =>  return `True` 
+(found an option1 in section1)
 
 ## has_section
 
-This function has got an additional boolean parameter, `strict`, which will decide if the function looks for the exact given section name (`strict=True`) or if the function looks for eventual inheritance signs(`strict=True`, default). Here's a small example using `has_section('section1')` :
+This function has got an additional boolean parameter, `strict`, which will decide if the function searches for the exact given section name (`strict=True`) or if the function searches for eventual inheritance signs(`strict=True`, default). Here's a small example using `has_section('section1')` :
 
     [section1:section2]
     random=stuff
@@ -196,17 +201,19 @@ This function has got an additional boolean parameter, `strict`, which will deci
     [section2]
     really=random
 
-- `strict=False`  =>  return `True`
+- `strict=False`  =>  return `True` because `section1:` has been found
 
-- `strict=True`  =>  return `False` because `section1` != `section1:section2` here
+- `strict=True`  =>  return `False` because `section1 != section1:section2` here
 
 ### `items()`
 
-This function now has the same `strict` optional parameter as `has_option()` which plays the exact same role : if True, the function will return a list of option-value tuples from the section only, and, if False (default), will return a list of option-value tuples from the section, its parents and the `DEFAULT` section.
+This function now has the same `strict` optional parameter as `has_option()` which plays the exact same role : if `strict=True`, the function will return a list of option-value tuples from the section only, and, if `strict=False` (default), will return a list of option-value tuples from the section, its parents and the `DEFAULT` section.
+
+There is another optional parameter `defaults` which is intended to work with `strict=True` : if `defaults=True`, the `DEFAULT` section's items will be returned as well as the given section's items.
 
 ### `options()`
 
-This function now has the same `strict` optional parameter as `has_option()` which plays the exact same role : if True, the function will return a list of options from the section only, and, if False (default), will return a list of options from the section, its parents and the `DEFAULT` section.
+This function now has the same `strict` optional parameter as `has_option()` which plays the exact same role : if `strict=True`, the function will return a list of options from the section only, and, if `strict=False` (default), will return a list of options from the section, its parents and the `DEFAULT` section.
 
 ## Special thanks
 
