@@ -102,7 +102,7 @@ You can use this version via the `get()` method by setting the `cfg_plus` parame
 
 **Syntax : `option[grandparent_parent_child]=value`**
 
-Note that the separator '_' is customizable via the constructor and `set_config_separator()`.
+Note that the separator `_` is customizable via the constructor and `set_config_separator()`.
 
 ## Section inheritance
 
@@ -150,9 +150,9 @@ The value of `option1` for `section1` will be `val1` here. However, if you want 
 
 ### Syntax
 
-**Syntax : `[child:parent:grandparent]**
+**Syntax : `[child:parent:grandparent]`**
 
-Note that the separator ':' is customizable via the constructor and `set_section_separator()`.
+Note that the separator `:` is customizable via the constructor and `set_section_separator()`.
 
 ## Miscellaneous
 
@@ -222,7 +222,7 @@ You can now have a list of values associated with an option : just by separating
     [section1]
     option1=a;very;long;list
 
-Both `get()`, `getint()`, `getfloat()` and `getboolean()` have been modified to automatically return a value as a list if the list separator (';' by default) has been identified in the value. This separator is customizable via the constructor and `set_list_separator()`.
+Both `get()`, `getint()`, `getfloat()` and `getboolean()` have been modified to automatically return a value as a list if the list separator (`;` by default) has been identified in the value. This separator is customizable via the constructor and `set_list_separator()`.
 
 ## Special thanks
 
