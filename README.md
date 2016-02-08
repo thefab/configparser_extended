@@ -102,7 +102,7 @@ You can use this version via the `get()` method by setting the `cfg_plus` parame
 
 **Syntax : `option[grandparent_parent_child]=value`**
 
-Note that the separator '_' is customizable via the constructor.
+Note that the separator '_' is customizable via the constructor and `set_config_separator()`.
 
 ## Section inheritance
 
@@ -152,7 +152,7 @@ The value of `option1` for `section1` will be `val1` here. However, if you want 
 
 **Syntax : `[child:parent:grandparent]**
 
-Note that the separator ':' is customizable via the constructor
+Note that the separator ':' is customizable via the constructor and `set_section_separator()`.
 
 ## Miscellaneous
 
@@ -214,6 +214,15 @@ There is another optional parameter `defaults` which is intended to work with `s
 ### `options()`
 
 This function now has the same `strict` optional parameter as `has_option()` which plays the exact same role : if `strict=True`, the function will return a list of options from the section only, and, if `strict=False` (default), will return a list of options from the section, its parents and the `DEFAULT` section.
+
+### List values
+
+You can now have a list of values associated with an option : just by separating the values with ';', you can have a list of values bound to an option :
+
+    [section1]
+    option1=a;very;long;list
+
+Both `get()`, `getint()`, `getfloat()` and `getboolean()` have been modified to automatically return a value as a list if the list separator (';' by default) has been identified in the value. This separator is customizable via the constructor and `set_list_separator()`.
 
 ## Special thanks
 

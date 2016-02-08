@@ -384,20 +384,6 @@ class AdvancedTestCase(unittest.TestCase):
         self.x.read('./test_cfg.ini')
         self.assertEqual(self.x.get('sect1', 'key049'), 'DEFAULT')
 
-    def test_get_kwargs(self):
-        self.x = ExtendedConfigParser(config='dev',
-                                      config_separator='#',
-                                      section_separator='%',
-                                      delimiters=':',
-                                      comment_prefixes=('#', ';'),
-                                      inline_comment_prefixes=None,
-                                      strict=True,
-                                      empty_lines_in_values=True,
-                                      default_section='THINGY',
-                                      interpolation=None)
-        self.x.read('./test_cfg_kwargs.ini')
-        self.assertEqual(self.x.get('sect1', 'key2'), 'dev2')
-
     def test_get_config_plus(self):
         self.x = ExtendedConfigParser(config='mem_plop_toto')
         self.x.read('./test_cfg.ini')
@@ -473,6 +459,72 @@ class AdvancedTestCase(unittest.TestCase):
         self.x.read('./test_cfg.ini')
         self.assertEqual(self.x.get('sect3', 'key3', sect_first=False,
                          cfg_plus=True), 'toto3')
+
+    def test_get_kwargs(self):
+        self.x = ExtendedConfigParser(config='dev',
+                                      config_separator='#',
+                                      section_separator='%',
+                                      list_separator='*',
+                                      delimiters=':',
+                                      comment_prefixes=('#', ';'),
+                                      inline_comment_prefixes=None,
+                                      strict=True,
+                                      empty_lines_in_values=True,
+                                      default_section='THINGY',
+                                      interpolation=None)
+        self.x.read('./test_cfg_kwargs.ini')
+        self.assertEqual(self.x.get('sect1', 'key2'), ['dev2', '2ved',
+                                                       '2vedev2'])
+
+    def test_set_config_separator(self):
+        self.x = ExtendedConfigParser(config='dev#dem#der',
+                                      section_separator='%',
+                                      list_separator='*')
+        self.x.read('./test_cfg_kwargs.ini')
+        self.x.set_config_separator('#')
+        self.assertEqual(self.x.get('sect1', 'key1'), 'dev1')
+
+    def test_set_config_separator_wrong(self):
+        self.x = ExtendedConfigParser(config='dev_dem_der',
+                                      section_separator='%',
+                                      list_separator='*')
+        self.x.read('./test_cfg_kwargs.ini')
+        self.x.set_config_separator('#')
+        self.x.set_config_name('dev_dem_der')
+        self.assertEqual(self.x.get('sect1', 'key1'), 'val1')
+
+    def test_set_section_separator(self):
+        self.x = ExtendedConfigParser(config='',
+                                      config_separator='#',
+                                      list_separator='*')
+        self.x.read('./test_cfg_kwargs.ini')
+        self.x.set_section_separator('%')
+        self.assertEqual(self.x.get('sect1', 'key3'), 'val3')
+
+    def test_set_section_separator_fail(self):
+        self.x = ExtendedConfigParser(config='',
+                                      config_separator='#',
+                                      list_separator='*')
+        self.x.read('./test_cfg_kwargs.ini')
+        self.x.set_section_separator('%')
+        self.assertEqual(self.x.get('sect1', 'key3'), 'val3')
+
+    def test_set_list_separator(self):
+        self.x = ExtendedConfigParser(config='dev',
+                                      config_separator='#',
+                                      section_separator='%')
+        self.x.read('./test_cfg_kwargs.ini')
+        self.x.set_list_separator('*')
+        self.assertEqual(self.x.get('sect1', 'key2'), ['dev2', '2ved',
+                                                       '2vedev2'])
+
+    def test_set_list_separator_wrong(self):
+        self.x = ExtendedConfigParser(config='dev',
+                                      config_separator='#',
+                                      section_separator='%')
+        self.x.read('./test_cfg_kwargs.ini')
+        self.x.set_list_separator('*')
+        self.assertEqual(self.x.get('sect1', 'key_list'), 'damn;dang;nabbit')
 
 
 class InheritanceTestCase(unittest.TestCase):

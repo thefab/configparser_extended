@@ -24,6 +24,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
     config_name = ''
     config_separator = '_'
     section_separator = ':'
+    list_separator = ';'
     father = {}     # Contains the defaults values
 
     def __init__(self,
@@ -33,6 +34,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
                  config='',
                  config_separator='_',
                  section_separator=':',
+                 list_separator=';',
                  **kwargs
                  ):
 
@@ -49,6 +51,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         self.config_name = config
         self.config_separator = config_separator
         self.section_separator = section_separator
+        self.list_separator = list_separator
         self._proxies[self.
                       default_section] = SectionProxyExtended(self,
                                                               configparser.
@@ -375,11 +378,11 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return configs
 
     def convert_value_list(self, val):
-        """ Converts a value into a List if it contains ';' or returns the
-        value if it doesn't. """
+        """ Converts a value into a List if it contains self.list_separator or
+        returns the value if it doesn't. """
 
-        if(';' in val):
-            list_val = val.split(';')
+        if(self.list_separator in val):
+            list_val = val.split(self.list_separator)
             return list_val
         else:
             return val
@@ -722,6 +725,15 @@ class ExtendedConfigParser(configparser.ConfigParser):
         if(defaults):
             res += list(self.default_section.keys()) + list(self.father.keys())
         return res
+
+    def set_config_separator(self, separator):
+        self.config_separator = separator
+
+    def set_section_separator(self, separator):
+        self.section_separator = separator
+
+    def set_list_separator(self, separator):
+        self.list_separator = separator
 
 
 class SectionProxyExtended(configparser.SectionProxy):
