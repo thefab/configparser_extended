@@ -526,6 +526,16 @@ class AdvancedTestCase(unittest.TestCase):
         self.x.set_list_separator('*')
         self.assertEqual(self.x.get('sect1', 'key_list'), 'damn;dang;nabbit')
 
+    def test_get_section_name_compact_basic(self):
+        self.assertEqual(self.x.get_section_name_compact('sect2'), 'sect2')
+
+    def test_get_section_name_compact_parents(self):
+        self.assertEqual(self.x.get_section_name_compact('sect1:sect2:sect3'),
+                         'sect1')
+
+    def test_get_first_section(self):
+        self.assertEqual(self.x.get_first_section(), 'sect1')
+
 
 class InheritanceTestCase(unittest.TestCase):
 

@@ -322,6 +322,21 @@ class ExtendedConfigParser(configparser.ConfigParser):
                 return sect
         raise NoSectionError(section)
 
+    def get_section_name_compact(self, section):
+        """ Returns the name of the section without its parents. """
+
+        if(self.section_separator in section):
+            sect = section[:section.find(self.section_separator)]
+        else:
+            sect = section
+        return sect
+
+    def get_first_section(self):
+        """ Returns the compact name of the first section """
+        for s in self._sections:
+            s = self.get_section_name_compact(s)
+            return s
+
     def get_configs(self, config=''):
         """ Returns a config name and its direct parents.
 
