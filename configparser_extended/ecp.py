@@ -728,7 +728,10 @@ class ExtendedConfigParser(configparser.ConfigParser):
         sections = self.get_corresponding_sections(section)
         for s in sections:
             res += super(ExtendedConfigParser, self).options(s)
-        res += list(self.default_section.keys()) + list(self.father.keys())
+        if(self.default_section is not None):
+            res += list(self.default_section.keys())
+        if(self.father is not None):
+            res += list(self.father.keys())
         return res
 
     def _options_strict(self, section, defaults=False):
@@ -738,7 +741,10 @@ class ExtendedConfigParser(configparser.ConfigParser):
         sect = self.get_section_name(section)
         res = super(ExtendedConfigParser, self).options(sect)
         if(defaults):
-            res += list(self.default_section.keys()) + list(self.father.keys())
+            if(self.default_section is not None):
+                res += list(self.default_section.keys())
+            if(self.father is not None):
+                res += list(self.father.keys())
         return res
 
     def set_config_separator(self, separator):
