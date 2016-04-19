@@ -177,6 +177,21 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(self.x.options('sect1', strict=True, defaults=True),
                           res)
 
+    def test_options_strict_config_ind(self):
+        res = ['key1', 'key_int', 'key_bool1', 'key_bool2', 'key_bool3',
+               'key_bool4', 'key_bool5', 'key_bool6', 'key_float', 'key_list',
+               'key_list_int', 'key_list_bool', 'key_list_float']
+        self.assertEquals(self.x.options('sect1', strict=True, cfg_ind=True),
+                          res)
+
+    def test_options_strict_config_ind_defaults(self):
+        res = ['key1', 'key_int', 'key_bool1', 'key_bool2', 'key_bool3',
+               'key_bool4', 'key_bool5', 'key_bool6', 'key_float', 'key_list',
+               'key_list_int', 'key_list_bool', 'key_list_float', 'key2',
+               'key3', 'key049']
+        self.assertEquals(self.x.options('sect1', strict=True, defaults=True,
+                          cfg_ind=True), res)
+
     def test_items_basic(self):
         res = [('key1', 'val1_sect2'),
                ('key2', 'val2'),

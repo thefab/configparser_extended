@@ -215,14 +215,16 @@ There is another optional parameter `defaults` which is intended to work with `s
 
 This function now has the same `strict` optional parameter as `has_option()` which plays the exact same role : if `strict=True`, the function will return a list of options from the section only, and, if `strict=False` (default), will return a list of options from the section, its parents and the `DEFAULT` section.
 
+You can also obtain a list of options without the option specifications (without [config_name]) by setting the optional parameter `cfg_ind` to `True`.
+
 ### List values
 
-You can now have a list of values associated with an option : just by separating the values with ';', you can have a list of values bound to an option :
+You can now have a list of values associated with an option : just by separating the values with `;`, you can have a list of values bound to an option :
 
     [section1]
     option1=a;very;long;list
 
-Both `get()`, `getint()`, `getfloat()` and `getboolean()` have been modified to automatically return a value as a list if the list separator (`;` by default) has been identified in the value. This separator is customizable via the constructor (`list_separator=`) and `set_list_separator()`.
+Both `get()`, `getint()`, `getfloat()` and `getboolean()` have been modified to automatically return a value as a list if the list separator (`;` by default) has been identified. This separator is customizable via the constructor (`list_separator=`) and `set_list_separator()`.
 
 ## Special thanks
 

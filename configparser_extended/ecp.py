@@ -709,16 +709,24 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
         return [(sect, self[sect]) for sect in self._sections]
 
-    def options(self, section, strict=False, defaults=False):
+    def options(self, section, strict=False, defaults=False, cfg_ind=False):
         """ Returns a list of option names for the given section and its
         parents if strict is False, or, if strict is True, returns a list of
-        option names for the given section only. If defaults and strict are
-        True, DEFAULT options will be included. """
+        option names for the given section only.
+        If defaults is True, DEFAULT options will be included.
+        If cfg_ind is True, the list will contain the option names without any
+        option specification (without [config_name]) """
 
         if(strict):
-            return self._options_strict(section, defaults)
+            if(cfg_ind):
+                return self._options_strict_config_ind(section, defaults)
+            else:
+                return self._options_strict(section, defaults)
         else:
-            return self._options(section)
+            if(cfg_ind):
+                return self._options_config_ind(section)
+            else:
+                return self._options(section)
 
     def _options(self, section):
         """ Returns a list of option names for the given section and its
@@ -745,6 +753,58 @@ class ExtendedConfigParser(configparser.ConfigParser):
                 res += list(self.default_section.keys())
             if(self.father is not None):
                 res += list(self.father.keys())
+        return res
+
+    def _options_config_ind(self, section):
+        """ Returns a list of option names without the option specifications
+        for the given section and its parents. """
+
+        res = []
+        sections = self.get_corresponding_sections(section)
+        for s in sections:
+            res += (self._option_strict_config_ind(s, defaults=False) - res)
+        return res
+
+    def _options_strict_config_ind(self, section, defaults=False):
+        """ Returns a list of option names without the config specifications
+        for the given section only. If defaults is True, DEFAULT options will
+        be included. """
+
+        res = []
+        sect = self.get_section_name(section)
+        options = super(ExtendedConfigParser, self).options(sect)
+        if(defaults):
+            if(self.default_section is not None):
+                options += list(self.default_section.keys())
+            if(self.father is not None):
+                options += list(self.father.keys())
+        for o in options:
+            if("[" in o):
+                opt = o[:o.find("[")]
+            else:
+                opt = o
+            if(opt not in res):
+                print opt
+                res.append(opt)
+        return res
+
+        """res = []
+        sect = self.get_section_name(section)
+        for o in self[section]:
+            opt = o[:o.find("[")]
+            if(opt not in res):
+                res.append(res)
+        if(defaults):
+            if(self.default_section is not None):
+                for o in self.default_section:
+                    opt = o[:o.find("[")]
+                    if(opt not in res):
+                        res.append(res)
+            if(self.father is not None):
+                for o in self.father:
+                    opt = o[:o.find("[")]
+                    if(opt not in res):
+                        res.append(res)"""
         return res
 
     def set_config_separator(self, separator):
