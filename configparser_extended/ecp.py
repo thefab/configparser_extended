@@ -713,7 +713,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """ Returns a list of option names for the given section and its
         parents if strict is False, or, if strict is True, returns a list of
         option names for the given section only.
-        If defaults is True, DEFAULT options will be included.
+        If defaults and strict are True, DEFAULT options will be included.
         If cfg_ind is True, the list will contain the option names without any
         option specification (without [config_name]) """
 
@@ -762,7 +762,9 @@ class ExtendedConfigParser(configparser.ConfigParser):
         res = []
         sections = self.get_corresponding_sections(section)
         for s in sections:
-            res += (self._option_strict_config_ind(s, defaults=False) - res)
+            # Only the elements that are not in common are taken
+            res += list(set(self._options_strict_config_ind(s, 
+                        defaults=False)) - set(res))
         return res
 
     def _options_strict_config_ind(self, section, defaults=False):
@@ -784,27 +786,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
             else:
                 opt = o
             if(opt not in res):
-                print opt
                 res.append(opt)
-        return res
-
-        """res = []
-        sect = self.get_section_name(section)
-        for o in self[section]:
-            opt = o[:o.find("[")]
-            if(opt not in res):
-                res.append(res)
-        if(defaults):
-            if(self.default_section is not None):
-                for o in self.default_section:
-                    opt = o[:o.find("[")]
-                    if(opt not in res):
-                        res.append(res)
-            if(self.father is not None):
-                for o in self.father:
-                    opt = o[:o.find("[")]
-                    if(opt not in res):
-                        res.append(res)"""
         return res
 
     def set_config_separator(self, separator):

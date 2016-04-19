@@ -215,6 +215,8 @@ There is another optional parameter `defaults` which is intended to work with `s
 
 This function now has the same `strict` optional parameter as `has_option()` which plays the exact same role : if `strict=True`, the function will return a list of options from the section only, and, if `strict=False` (default), will return a list of options from the section, its parents and the `DEFAULT` section.
 
+If `strict` is `True`, you can set the optional parameter `defaults` to `True` to get the list of options from the section and the DEFAULT section, excluding the section's parents
+
 You can also obtain a list of options without the option specifications (without [config_name]) by setting the optional parameter `cfg_ind` to `True`.
 
 ### List values
