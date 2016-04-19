@@ -273,8 +273,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
             # a pair of brackets (ex : key1[config1]=val1 )
             # NoSectionError raised by get_no_def()
             else:
-                return super(ExtendedConfigParser, self).get(section, option
-                                                             + '[' + config +
+                return super(ExtendedConfigParser, self).get(section, option +
+                                                             '[' + config +
                                                              ']', raw=raw)
 
         except NoOptionError:
@@ -296,8 +296,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
             if section_name_edited in self._sections:
                 sections.append(section_name_edited)
             section_name_edited = section_name_edited[section_name_edited.find(
-                                                      self.section_separator)
-                                                      + 1:]
+                                                      self.section_separator) +
+                                                      1:]
 
         section_splitted = sect.split(self.section_separator)
         for s in section_splitted:
@@ -536,8 +536,8 @@ class ExtendedConfigParser(configparser.ConfigParser):
                 for c in configs:
                     res = super(ExtendedConfigParser, self).has_option(s,
                                                                        option +
-                                                                       '[' + c
-                                                                       + ']')
+                                                                       '[' +
+                                                                       c + ']')
                     if(res):
                         return True
 
@@ -558,15 +558,16 @@ class ExtendedConfigParser(configparser.ConfigParser):
             else:
                 configs = self.get_configs()
             for c in configs:
-                res = super(ExtendedConfigParser, self).has_option(sect, option
-                                                                   + '[' + c +
+                res = super(ExtendedConfigParser, self).has_option(sect,
+                                                                   option +
+                                                                   '[' + c +
                                                                    ']')
                 if(res):
                     return True
             res = super(ExtendedConfigParser, self).has_option(sect,
                                                                option)
             if(res):
-                    return True
+                return True
             return False
 
     def _has_option_config_ind(self, section, option):
