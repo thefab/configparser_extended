@@ -381,21 +381,31 @@ class AdvancedTestCase(unittest.TestCase):
         self.x = ExtendedConfigParser()
         self.x.read('./test_cfg.ini')
 
+    def test_get_not_list(self):
+        res = 'damn;dang;nabbit'
+        self.assertEqual(self.x.get('sect1', 'key_list'), res)
+
     def test_get_list(self):
         res = ['damn', 'dang', 'nabbit']
-        self.assertEqual(self.x.get('sect1', 'key_list'), res)
+        self.assertEqual(self.x.get('sect1', 'key_list', isList=True), res)
 
     def test_get_list_int(self):
         res = [1, 7, 3]
-        self.assertEqual(self.x.getint('sect1', 'key_list_int'), res)
+        self.assertEqual(self.x.getintlist('sect1', 'key_list_int'), res)
 
     def test_get_list_bool(self):
         res = [True, False, True]
-        self.assertEqual(self.x.getboolean('sect1', 'key_list_bool'), res)
+        self.assertEqual(self.x.getbooleanlist('sect1', 'key_list_bool'), res)
 
     def test_get_list_float(self):
         res = [0.96, 1.73, 6.82]
-        self.assertEqual(self.x.getfloat('sect1', 'key_list_float'), res)
+        self.assertEqual(self.x.getfloatlist('sect1', 'key_list_float'), res)
+
+    def test_get_fallback_list(self):
+        # If not found in the section or parents (tests list for defaults,
+        # fallback, father,...)
+        self.assertEqual(self.x.get('sect1', 'key173', fallback='deez',
+                                    isList=True), ['deez'])
 
     def test_get_father(self):
         self.x = ExtendedConfigParser(defaults={'key4': 'father'})
@@ -483,6 +493,11 @@ class AdvancedTestCase(unittest.TestCase):
         self.assertEqual(self.x.get('sect3', 'key3', sect_first=False,
                          cfg_plus=True), 'toto3')
 
+    def test_get_config_section_loop_list(self):
+        self.assertEqual(self.x.get('sect2', 'key173', sect_first=False,
+                                    fallback='SCP-173', isList=True),
+                         ['SCP-173'])
+
     def test_get_kwargs(self):
         self.x = ExtendedConfigParser(config='dev',
                                       config_separator='#',
@@ -496,8 +511,8 @@ class AdvancedTestCase(unittest.TestCase):
                                       default_section='THINGY',
                                       interpolation=None)
         self.x.read('./test_cfg_kwargs.ini')
-        self.assertEqual(self.x.get('sect1', 'key2'), ['dev2', '2ved',
-                                                       '2vedev2'])
+        self.assertEqual(self.x.get('sect1', 'key2', isList=True),
+                         ['dev2', '2ved', '2vedev2'])
 
     def test_set_config_separator(self):
         self.x = ExtendedConfigParser(config='dev#dem#der',
@@ -538,8 +553,8 @@ class AdvancedTestCase(unittest.TestCase):
                                       section_separator='%')
         self.x.read('./test_cfg_kwargs.ini')
         self.x.set_list_separator('*')
-        self.assertEqual(self.x.get('sect1', 'key2'), ['dev2', '2ved',
-                                                       '2vedev2'])
+        self.assertEqual(self.x.get('sect1', 'key2', isList=True),
+                         ['dev2', '2ved', '2vedev2'])
 
     def test_set_list_separator_wrong(self):
         self.x = ExtendedConfigParser(config='dev',

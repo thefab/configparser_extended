@@ -191,7 +191,7 @@ A little example with a `aye` config name using `has_option('section1',option1)`
 - `strict=True` ; `cfg_ind=True`  =>  return `True` 
 (found an option1 in section1)
 
-## has_section
+## `has_section()`
 
 This function has got an additional boolean parameter, `strict`, which will decide if the function searches for the exact given section name (`strict=True`) or if the function searches for eventual inheritance signs(`strict=True`, default). Here's a small example using `has_section('section1')` :
 
@@ -226,7 +226,9 @@ You can now have a list of values associated with an option : just by separating
     [section1]
     option1=a;very;long;list
 
-Both `get()`, `getint()`, `getfloat()` and `getboolean()` have been modified to automatically return a value as a list if the list separator (`;` by default) has been identified. This separator is customizable via the constructor (`list_separator=`) and `set_list_separator()`.
+Both `get()` now has a new optionnal parameter `isList` that, is set to `True`, allows the function to return a value as a list by splitting the value using the list separator (`;` by default). This separator is customizable via the constructor (`list_separator=`) and `set_list_separator()`.
+
+There are also new functions which combine this new functionnalities with the ones from their predecessors : `getintlist()`, `getfloatlist()`, `getbooleanlist()`
 
 ## Special thanks
 
