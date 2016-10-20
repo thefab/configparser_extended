@@ -6,7 +6,11 @@
 
 import configparser
 from configparser import NoOptionError, NoSectionError
-from backports.configparser.helpers import OrderedDict
+try:
+    from backports.configparser.helpers import OrderedDict
+except ImportError:
+    from collections import OrderedDict
+
 from six import u
 
 
