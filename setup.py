@@ -5,6 +5,7 @@
 # released under the MIT license.
 # See the LICENSE file for more information.
 
+import sys
 from setuptools import setup, find_packages
 
 DESCRIPTION = ("A python configparser extension")
@@ -18,8 +19,12 @@ except IOError:
 with open('pip-requirements.txt') as reqs:
     install_requires = [
         line for line in reqs.read().split('\n')
-        if (line and not line.startswith('--'))
+        if (line and not line.startswith('--')) and (";" not in line)
     ]
+
+if sys.version_info[:2] < (3, 5):
+    install_requires.append("configparser>=3.5.0b2")
+
 setup(
     name='configparser_extended',
     version="0.0.1",
