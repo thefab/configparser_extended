@@ -136,6 +136,33 @@ In this case, `section2` and `section3` serve as fallback sections, prioritized 
 
 As you can see, it is possible to have multiple fallback sections but **they are prioritized from left to right** (see `option2`). You can consider that every section "inherits" from the `DEFAULT` section. **Warning, writing `section1:section2:section3` doesn't imply that `section2:section3`!!!**
 
+There is also a mode that allows Object-like inheritance : in this case, you do not define fallback sections, but parents for the section you want. Here is an example
+
+![alt text](https://en.wikipedia.org/wiki/Multiple_inheritance#/media/File:Diamond_inheritance.svg "Diamond inheritance")
+
+The file that would reproduce this situation would be :
+
+    [D:B:C]
+    key1=D
+    
+    [B:A]
+    key2=B
+    
+    [C:A]
+    key2=C
+    
+    [A]
+    key3=A
+    
+Ther is a little twist here though : technically, there should be an ambiguity about the value of `key2` here, but, since `B` was defined as a parent before `C` in the code, `B` will have the priority over `C`. This also applies for their respective parents. Therefore, the values in `D` will be :
+
+    [D]
+    key1=D
+    key2=B
+    key3=A
+
+To switch from section fallback (default) to Object-like inheritance, the attribute `inheritance` must be set to either `im`, `impl` or `implicit`. This can be done from the constructor (`inheriance=`) or using the `set_intheritance()` function. Any other value given to `inheritance` will switch to the default mode.
+
 ### Usage with option specification
 
 In ConfigParserExtended, by default, the search using configuration names is done on a section scale, not on the whole file. Thus, if an option has been found in a child section, the option will be returned and the parent section will not be searched. Example with a `dev` configuration : 

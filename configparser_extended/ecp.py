@@ -6,7 +6,11 @@
 
 import configparser
 from configparser import NoOptionError, NoSectionError
-from backports.configparser.helpers import OrderedDict
+try:
+    from backports.configparser.helpers import OrderedDict
+except ImportError:
+    from collections import OrderedDict
+
 from six import u
 
 
@@ -25,6 +29,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
     config_separator = '_'
     section_separator = ':'
     list_separator = ';'
+    inheritance = 'explicit'
     father = {}     # Contains the defaults values
 
     def __init__(self,
@@ -35,6 +40,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
                  config_separator='_',
                  section_separator=':',
                  list_separator=';',
+                 inheritance='explicit',
                  **kwargs
                  ):
 
@@ -52,6 +58,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         self.config_separator = config_separator
         self.section_separator = section_separator
         self.list_separator = list_separator
+        self.inheritance = inheritance
         self._proxies[self.
                       default_section] = SectionProxyExtended(self,
                                                               configparser.
@@ -292,6 +299,19 @@ class ExtendedConfigParser(configparser.ConfigParser):
         sections and stores the section name itself as well as its parents'.
         """
 
+        if(self.inheritance == 'im'
+           or self.inheritance == 'impl'
+           or self.inheritance == 'implicit'):
+            return self._get_corresponding_sections_inheritance(section)
+        else:
+            return self._get_corresponding_sections(section)
+
+    def _get_corresponding_sections(self, section):
+        """ Look for the actual name of the section if it inherits from other
+        sections and stores the section name itself as well as its parents'.
+        Searches only through parents explicitly defined in the section name
+        """
+
         # Find the corresponding section if it inherits from another section
         sect = self.get_section_name(section)
 
@@ -305,16 +325,57 @@ class ExtendedConfigParser(configparser.ConfigParser):
             section_name_edited = section_name_edited[section_name_edited.find(
                                                       self.section_separator) +
                                                       1:]
-
+        # Section names alone, without parents
         section_splitted = sect.split(self.section_separator)
         for s in section_splitted:
+            # If the section name exists
             if s in self._sections:
                 sections.append(s)
         return sections
 
+    def _get_corresponding_sections_inheritance(self, section):
+        """ Look for the actual name of the section if it inherits from other
+        sections and stores the section name itself as well as its parents'.
+        This version is closer to the Object notion of inheritance since it
+        also finds "abstract" parents
+
+        ex : [sect1:sect2] and [sect2:sect3] => [sect1:sect2:sect3]
+
+        [sect1:sect2:sect3] is now interpreted differently : [sect2] and
+        [sect3] are now both parents of [sect1], [sect3] is not a grandparent
+        here. It is not advised to use multiple inheritance on a regular basis
+        though.
+        """
+
+        sections = []
+
+        # Find the corresponding section if it inherits from another section
+        sect = self.get_section_name(section)
+
+        # Section names alone, without parents
+        section_splitted = sect.split(self.section_separator)
+
+        # Loop to find the abstract parents of the section names without
+        # separators
+        for s in section_splitted:
+            # Search for the abstract parents of the parent sections
+            parents = self._get_corresponding_sections(s)
+            # Get the parents' names without separators
+            full_name = self.get_section_name(s)
+            parents_splitted = full_name.split(self.section_separator)
+            parents_splitted = [x for x in parents_splitted if x not in
+                                section_splitted]
+            section_splitted.extend(parents_splitted)
+            # Remove the already present results
+            parents = [x for x in parents if x not in sections]
+            sections.extend(parents)
+
+        return sections
+
     def get_section_name(self, section):
         """ Returns the actual name of the section inside the read source if
-        it inherits from some other source. """
+        it inherits from some other source. /!\\ Only returns the first
+        name found"""
 
         if(section in self._sections):
             return section
@@ -819,6 +880,9 @@ class ExtendedConfigParser(configparser.ConfigParser):
 
     def set_list_separator(self, separator):
         self.list_separator = separator
+
+    def set_inheritance(self, inheritance):
+        self.inheritance = inheritance
 
 
 class SectionProxyExtended(configparser.SectionProxy):

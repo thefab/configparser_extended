@@ -4,7 +4,10 @@
 import unittest
 from configparser import NoOptionError, NoSectionError
 from configparser_extended import ExtendedConfigParser, SectionProxyExtended
-from backports.configparser.helpers import OrderedDict
+try:
+    from backports.configparser.helpers import OrderedDict
+except ImportError:
+    from collections import OrderedDict
 
 
 class BasicTestCase(unittest.TestCase):
@@ -23,7 +26,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertRaises(NoOptionError, self.x.get, 'sect2', 'key4')
 
     def test_get_basic_fail2(self):
-        self.assertRaises(NoSectionError, self.x.get, 'sect4', 'key3')
+        self.assertRaises(NoSectionError, self.x.get, 'sect404', 'key3')
 
     def test_get_int(self):
         self.assertEqual(self.x.getint('sect1', 'key_int'), 1)
@@ -75,7 +78,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertTrue(self.x.has_section('sect1'))
 
     def test_has_section_fail(self):
-        self.assertFalse(self.x.has_section('sect42'))
+        self.assertFalse(self.x.has_section('sect404'))
 
     def test_has_option(self):
         self.assertTrue(self.x.has_option('sect3', 'key3'))
@@ -345,7 +348,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(self.x['sect2']['key2'], 'val2')
 
     def test_get_sect_dict_fail(self):
-        self.assertRaises(KeyError, lambda: self.x['sect4'])
+        self.assertRaises(KeyError, lambda: self.x['sect404'])
 
     def test_get_key_dict_fail(self):
         self.assertRaises(KeyError, lambda: self.x['sect2']['key42'])
@@ -564,6 +567,10 @@ class AdvancedTestCase(unittest.TestCase):
         self.x.set_list_separator('*')
         self.assertEqual(self.x.get('sect1', 'key_list'), 'damn;dang;nabbit')
 
+    def test_set_inheritance(self):
+        self.x.set_inheritance('test')
+        self.assertEqual(self.x.inheritance, 'test')
+
     def test_get_section_name_compact_basic(self):
         self.assertEqual(self.x.get_section_name_compact('sect2'), 'sect2')
 
@@ -585,7 +592,7 @@ class InheritanceTestCase(unittest.TestCase):
         self.assertEqual(self.x.get_section_name('sect1'), 'sect1:sect2:sect3')
 
     def test_get_section_name_fail(self):
-        self.assertRaises(NoSectionError, self.x.get_section_name, 'sect4')
+        self.assertRaises(NoSectionError, self.x.get_section_name, 'sect404')
 
     def test_get_basic2(self):
         self.assertEqual(self.x.get('sect1', 'key1'), 'val1')
@@ -595,11 +602,15 @@ class InheritanceTestCase(unittest.TestCase):
 
     def test_get_sections(self):
         sections = ['sect1:sect2:sect3', 'sect2', 'sect3']
-        self.assertEqual(self.x.get_corresponding_sections('sect1'), sections)
+        self.assertEqual(self.x._get_corresponding_sections('sect1'), sections)
+
+    def test_get_sections_return_name(self):
+        sections = ['sect3']
+        self.assertEqual(self.x._get_corresponding_sections('sect3'), sections)
 
     def test_get_sections_fail(self):
         self.assertRaises(NoSectionError, lambda:
-                          self.x.get_corresponding_sections('sect173'))
+                          self.x._get_corresponding_sections('sect173'))
 
     def test_get_parent_key(self):
         self.assertEqual(self.x.get('sect1', 'key2'), 'val2')
@@ -624,6 +635,135 @@ class InheritanceTestCase(unittest.TestCase):
 
     def test_get_sect_dict_fail(self):
         self.assertRaises(KeyError, lambda: self.x['sect42']['key1'])
+
+
+class InheritModeSelectionTestCase(unittest.TestCase):
+
+    def test_get_sections_method_select_im(self):
+        self.x = ExtendedConfigParser(inheritance='im')
+        self.x.read('./test_cfg.ini')
+        self.assertEqual(
+            self.x.get_corresponding_sections('sect4'),
+            self.x._get_corresponding_sections_inheritance('sect4'))
+
+    def test_get_sections_method_select_impl(self):
+        self.x = ExtendedConfigParser(inheritance='impl')
+        self.x.read('./test_cfg.ini')
+        self.assertEqual(
+            self.x.get_corresponding_sections('sect4'),
+            self.x._get_corresponding_sections_inheritance('sect4'))
+
+    def test_get_sections_method_select_implicit(self):
+        self.x = ExtendedConfigParser(inheritance='implicit')
+        self.x.read('./test_cfg.ini')
+        self.assertEqual(
+            self.x.get_corresponding_sections('sect4'),
+            self.x._get_corresponding_sections_inheritance('sect4'))
+
+    def test_get_sections_method_select_random(self):
+        self.x = ExtendedConfigParser(inheritance='Valkyr Prime')
+        self.x.read('./test_cfg.ini')
+        self.assertEqual(
+            self.x.get_corresponding_sections('sect4'),
+            self.x._get_corresponding_sections('sect4'))
+
+    def test_get_sections_method_select_default(self):
+        self.x = ExtendedConfigParser()
+        self.x.read('./test_cfg.ini')
+        self.assertEqual(
+            self.x.get_corresponding_sections('sect4'),
+            self.x._get_corresponding_sections('sect4'))
+
+
+class InheritModeTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.x = ExtendedConfigParser(inheritance='implicit')
+        self.x.read('./test_cfg.ini')
+
+    def test_get_sections_inherit_mode(self):
+        sections = ['sect1:sect2:sect3', 'sect2', 'sect3']
+        self.assertEqual(
+            self.x._get_corresponding_sections_inheritance('sect1'),
+            sections)
+
+    def test_get_sections_inherit_mode_return_name(self):
+        sections = ['sect3']
+        self.assertEqual(
+            self.x._get_corresponding_sections_inheritance('sect3'),
+            sections)
+
+    def test_get_sections_inherit_mode_fail(self):
+        self.assertRaises(
+            NoSectionError,
+            lambda: self.x._get_corresponding_sections_inheritance('sect173'))
+
+    def test_get_sections_inherit_mode_simple_inherit(self):
+        # [sect1:sect2] and [sect2:sect3] => [sect1:sect2:sect3]
+        sections = ['sect8:sect5', 'sect5:sect51', 'sect51']
+        self.assertEqual(
+            self.x._get_corresponding_sections_inheritance('sect8'),
+            sections)
+
+    def test_get_sections_inherit_mode_multiple_inherit(self):
+        # [sect1:sect2:sect3]  => check [sect2], [sect3] and their parents
+        sections = ['sect4:sect5:sect6', 'sect5:sect51',
+                    'sect51', 'sect6:sect61', 'sect61']
+        self.assertEqual(
+            self.x._get_corresponding_sections_inheritance('sect4'),
+            sections)
+
+    def test_section_inherit_mode_basic(self):
+        res = ['father', 'grandpa', 'key1[dev_plop_toto_stuff]', 'key2',
+               'key3', 'key049', 'key049[dev]']
+        res.sort()
+        test = self.x.options('sect6')
+        test.sort()
+        self.assertEquals(test, res)
+
+    def test_section_inherit_mode_basic_values(self):
+        res = [('father', '6'),
+               ('grandpa', '61'),
+               ('key1[dev_plop_toto_stuff]', 'dev_plop_toto1_default'),
+               ('key2', 'default2'),
+               ('key3', 'default3'),
+               ('key049', 'DEFAULT'),
+               ('key049[dev]', 'DEFAULT_dev')]
+        res.sort()
+        test = self.x.items('sect6')
+        test.sort()
+        self.assertEquals(test, res)
+
+    def test_section_inherit_mode_lvl2(self):
+        res = ['son', 'father', 'mother', 'grandpa', 'grandma',
+               'key1[dev_plop_toto_stuff]', 'key2', 'key3', 'key049',
+               'key049[dev]']
+        res.sort()
+        test = self.x.options('sect8')
+        test.sort()
+        self.assertEquals(test, res)
+
+    def test_section_inherit_mode_lvl2_values(self):
+        res = [('son', '8'),
+               ('father', '5'),
+               ('mother', '5'),
+               ('grandpa', '51'),
+               ('grandma', '51'),
+               ('key1[dev_plop_toto_stuff]', 'dev_plop_toto1_default'),
+               ('key2', 'default2'),
+               ('key3', 'default3'),
+               ('key049', 'DEFAULT'),
+               ('key049[dev]', 'DEFAULT_dev')]
+        res.sort()
+        test = self.x.items('sect8')
+        test.sort()
+        self.assertEquals(test, res)
+
+    def test_section_inherit_mode_multiple_inheritance_values_father(self):
+        self.assertEquals(self.x.get('sect4', 'father'), '5')
+
+    def test_section_inherit_mode_multiple_inheritance_values_grandpa(self):
+        self.assertEquals(self.x.get('sect4', 'grandpa'), '51')
 
 
 class SpecificationTestCase(unittest.TestCase):
