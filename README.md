@@ -138,7 +138,7 @@ As you can see, it is possible to have multiple fallback sections but **they are
 
 There is also a mode that allows Object-like inheritance : in this case, you do not define fallback sections, but parents for the section you want. Here is an example
 
-![alt text](https://en.wikipedia.org/wiki/Multiple_inheritance#/media/File:Diamond_inheritance.svg "Diamond inheritance")
+![Diamond Inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance#/media/File:Diamond_inheritance.svg)
 
 The file that would reproduce this situation would be :
 
