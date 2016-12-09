@@ -134,13 +134,13 @@ In this case, `section2` and `section3` serve as fallback sections, prioritized 
     option3=val3
     option4=default4
 
-As you can see, it is possible to have multiple fallback sections but **they are prioritized from left to right** (see `option2`). You can consider that every section "inherits" from the `DEFAULT` section. **Warning, writing `section1:section2:section3` doesn't imply that `section2:section3`!!!**
+As you can see, it is possible to have multiple fallback sections but **they are prioritized from left to right** (see `option2`). You can consider that every section "inherits" from the `DEFAULT` section. **Warning, writing `section1:section2:section3` doesn't imply that `section2:section3`!!! It only implies that `section1:section2` and `section1:section3`**
 
-There is also a mode that allows Object-like inheritance : in this case, you do not define fallback sections, but parents for the section you want. Here is an example
+There is also a mode that allows Object-like inheritance : in this case, **you do not define fallback sections, but parents** for the section you want. Here is an example :
 
 ![Diamond Inheritance](https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Diamond_inheritance.svg/220px-Diamond_inheritance.svg.png)
 
-The file that would reproduce this situation would be :
+A file that would reproduce this situation would be :
 
     [D:B:C]
     key1=D
@@ -154,7 +154,7 @@ The file that would reproduce this situation would be :
     [A]
     key3=A
     
-Ther is a little twist here though : technically, there should be an ambiguity about the value of `key2` here, but, since `B` was defined as a parent before `C` in the code, `B` will have the priority over `C`. This also applies for their respective parents. Therefore, the values in `D` will be :
+There is a little twist here though : technically, there should be an ambiguity about the value of `key2` here, but, since **`B` was defined as a parent before `C` in the code, `B` will have the priority over `C`**. This also applies for their respective parents. Therefore, the values in `D` will be :
 
     [D]
     key1=D
@@ -183,7 +183,7 @@ Note that the separator `:` is customizable via the constructor (`section_separa
 
 ## Miscellaneous
 
-Some methods have been adapted to these new functionnalities by adding options to take into account option specification and inheritance. These options allow yout to activate or deactivate the new functionalities. Keep in mind that these methods have the exact same roles as in the original ConfigParser (if not, feel free to report it).
+Some methods have been adapted to these new functionnalities by adding options to take into account option specification and inheritance. These options allow you to activate or deactivate the new functionalities. Keep in mind that these methods have the exact same roles as in the original ConfigParser (if not, feel free to report it).
 
 ### `has_option()`
 
@@ -253,7 +253,7 @@ You can now have a list of values associated with an option : just by separating
     [section1]
     option1=a;very;long;list
 
-Both `get()` now has a new optionnal parameter `isList` that, is set to `True`, allows the function to return a value as a list by splitting the value using the list separator (`;` by default). This separator is customizable via the constructor (`list_separator=`) and `set_list_separator()`.
+The `get()` function now has a new optionnal parameter `isList` that, if set to `True`, allows the function to return a value as a list by splitting the value using the list separator (`;` by default). This separator is customizable via the constructor (`list_separator=`) and `set_list_separator()`.
 
 There are also new functions which combine this new functionnalities with the ones from their predecessors : `getintlist()`, `getfloatlist()`, `getbooleanlist()`
 
