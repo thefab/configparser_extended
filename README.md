@@ -1,4 +1,4 @@
-# configparser_extended
+# configparser_extended
 
 **WARNING : it is STRONGLY advised to read the original ConfigParser documentation if you're a beginner**
 
