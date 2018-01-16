@@ -570,6 +570,15 @@ class ExtendedConfigParser(configparser.ConfigParser):
         super(ExtendedConfigParser, self).read_file(f, source)
         self.move_defaults()
 
+    def read_string(self, string, source='<string>'):
+        """ Like read() but the argument must be a string. It is highly
+        recommended that you use unicode strings. """
+
+        # Conversion to unicode to ensure Python2 compatibility
+        string = u(string)
+        super(ExtendedConfigParser, self).read_string(string, source)
+        self.move_defaults()
+
     def move_defaults(self):
         """ Transfers the content from the DEFAULT section to
         self.default_section to prevent get() from returning DEFAULT
