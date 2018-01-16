@@ -377,6 +377,21 @@ class BasicTestCase(unittest.TestCase):
         self.x.read_file(data)
         self.assertEqual(self.x.get('sect2', 'key2'), 'val2')
 
+    def test_read_string(self):
+        self.x = ExtendedConfigParser()
+        with open('./test_cfg.ini', 'r') as cfg_file:
+            string = cfg_file.read()
+        self.x.read_string(string)
+        self.assertEqual(self.x.get('sect2', 'key2'), 'val2')
+
+    def test_read_string_py2_byte(self):
+        self.x = ExtendedConfigParser()
+        with open('./test_cfg.ini', 'r') as cfg_file:
+            string = cfg_file.read()
+        string = string.encode('utf-8')
+        self.x.read_string(string)
+        self.assertEqual(self.x.get('sect2', 'key2'), 'val2')
+
 
 class AdvancedTestCase(unittest.TestCase):
 
