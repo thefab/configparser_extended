@@ -70,7 +70,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         self._defaults = {}
 
     def get(self, section, option, raw=False, vars=None,
-            fallback=None, sect_first=True, cfg_plus=False, isList=False):
+            fallback=_UNSET, sect_first=True, cfg_plus=False, isList=False):
         """ Returns the value corresponding to an option in a particular
         section. If vars is provided, it must be a dictionary. The value is
         looked up in vars before being looked up in section. This function
@@ -103,7 +103,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
                                             fallback, cfg_plus, isList)
 
     def section_config_loop(self, section, option, raw=False, vars=None,
-                            fallback=None, cfg_plus=False, isList=False):
+                            fallback=_UNSET, cfg_plus=False, isList=False):
         """ Loops on the configs inside a section
 
         run ex :
@@ -115,7 +115,16 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """
 
         result = None
-        sections = self.get_corresponding_sections(section)
+        # If fallback is set, return fallback instead of raising
+        # NoSectionError:
+        if fallback != _UNSET:
+            try:
+                sections = self.get_corresponding_sections(section)
+            except NoSectionError:
+                return fallback
+        else:
+            sections = self.get_corresponding_sections(section)
+
         if(not cfg_plus):
             configs = self.get_configs()
         else:
@@ -165,7 +174,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         if(result is None):
             result = fallback
 
-        if(result is None):
+        if(result is _UNSET):
             # If nothing has been found, raise an exception
             raise NoOptionError(option, section)
 
@@ -174,7 +183,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return result
 
     def config_section_loop(self, section, option, raw=False, vars=None,
-                            fallback=None, cfg_plus=False, isList=False):
+                            fallback=_UNSET, cfg_plus=False, isList=False):
         """ Loops on the sections per config name
 
         run ex :
@@ -242,7 +251,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         if(result is None):
             result = fallback
 
-        if(result is None):
+        if(result is _UNSET):
             # If nothing has been found, raise an exception
             raise NoOptionError(option, section)
 
@@ -473,7 +482,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return list_val
 
     def getint(self, section, option, raw=False, vars=None,
-               fallback=None):
+               fallback=_UNSET):
         """ Returns the value of an option as an integer. """
 
         res = self.get(section, option, raw, vars, fallback)
@@ -481,7 +490,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return res
 
     def getfloat(self, section, option, raw=False, vars=None,
-                 fallback=None):
+                 fallback=_UNSET):
         """ Returns the value of an option as an double. """
 
         res = self.get(section, option, raw, vars, fallback)
@@ -489,7 +498,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return res
 
     def getboolean(self, section, option, raw=False, vars=None,
-                   fallback=None):
+                   fallback=_UNSET):
         """ Returns the value of an option as a boolean. """
 
         res = self.get(section, option, raw, vars, fallback)
@@ -497,7 +506,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return res
 
     def getintlist(self, section, option, raw=False, vars=None,
-                   fallback=None):
+                   fallback=_UNSET):
         """ Returns the value of an option as an integer list. """
 
         res = self.get(section, option, raw, vars, fallback, isList=True)
@@ -505,7 +514,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return res
 
     def getfloatlist(self, section, option, raw=False, vars=None,
-                     fallback=None):
+                     fallback=_UNSET):
         """ Returns the value of an option as an double list. """
 
         res = self.get(section, option, raw, vars, fallback, isList=True)
@@ -513,7 +522,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
         return res
 
     def getbooleanlist(self, section, option, raw=False, vars=None,
-                       fallback=None):
+                       fallback=_UNSET):
         """ Returns the value of an option as a boolean list. """
 
         res = self.get(section, option, raw, vars, fallback, isList=True)
@@ -575,7 +584,6 @@ class ExtendedConfigParser(configparser.ConfigParser):
         recommended that you use unicode strings. """
 
         # Conversion to unicode to ensure Python2 compatibility
-        string = u(string)
         super(ExtendedConfigParser, self).read_string(string, source)
         self.move_defaults()
 
