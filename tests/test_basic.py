@@ -72,6 +72,21 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(self.x.get('sect1', 'key173', fallback='deez'),
                          'deez')
 
+    def test_get_fallback_None(self):
+        self.assertEqual(self.x.get('sect1', 'key173', fallback=None), None)
+
+    def test_get_fallback_no_section(self):
+        x = ExtendedConfigParser(config="FOO", strict=False)
+        x.read('./test_cfg.ini')
+        self.assertEqual(x.get('sect_does_not_exsist', 'key173',
+                               fallback='deez'), 'deez')
+
+    def test_get_fallback_no_section_None(self):
+        x = ExtendedConfigParser(config="FOO", strict=False)
+        x.read('./test_cfg.ini')
+        self.assertEqual(x.get('sect_does_not_exsist', 'key173',
+                               fallback=None), None)
+
     def test_has_section(self):
         self.assertTrue(self.x.has_section('sect2'))
 
