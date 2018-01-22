@@ -387,6 +387,17 @@ class BasicTestCase(unittest.TestCase):
         self.x.read_string(string)
         self.assertEqual(self.x.get('sect2', 'key2'), 'val2')
 
+    def test_read_string_byte(self):
+        self.x = ExtendedConfigParser()
+        with open('./test_cfg.ini', 'r') as cfg_file:
+            string = cfg_file.read()
+        if (sys.version_info == (2, 7)):
+            self.x.read_string(string)
+            self.assertRaises(TypeError, self.x.get, 'sect2', 'key2')
+        else:
+            self.x.read_string(string)
+            self.assertEqual(self.x.get('sect2', 'key2'), 'val2')
+
 
 class AdvancedTestCase(unittest.TestCase):
 
