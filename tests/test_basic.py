@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 import unittest
 from configparser import NoOptionError, NoSectionError
 from configparser_extended import ExtendedConfigParser, SectionProxyExtended
