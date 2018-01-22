@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 import unittest
 from configparser import NoOptionError, NoSectionError
 from configparser_extended import ExtendedConfigParser, SectionProxyExtended
@@ -8,6 +9,7 @@ try:
     from backports.configparser.helpers import OrderedDict
 except ImportError:
     from collections import OrderedDict
+from six import u
 
 
 class BasicTestCase(unittest.TestCase):
@@ -377,12 +379,24 @@ class BasicTestCase(unittest.TestCase):
         self.x.read_file(data)
         self.assertEqual(self.x.get('sect2', 'key2'), 'val2')
 
-    def test_read_string(self):
+    def test_read_string_unicode(self):
         self.x = ExtendedConfigParser()
         with open('./test_cfg.ini', 'r') as cfg_file:
             string = cfg_file.read()
+        string = u(string)
         self.x.read_string(string)
         self.assertEqual(self.x.get('sect2', 'key2'), 'val2')
+
+    def test_read_string_byte(self):
+        self.x = ExtendedConfigParser()
+        with open('./test_cfg.ini', 'r') as cfg_file:
+            string = cfg_file.read()
+        if (sys.version_info >= (3, 0)):
+            self.x.read_string(string)
+            self.assertRaises(TypeError, self.x.get, 'sect2', 'key2')
+        else:
+            self.x.read_string(string)
+            self.assertEqual(self.x.get('sect2', 'key2'), 'val2')
 
 
 class AdvancedTestCase(unittest.TestCase):
