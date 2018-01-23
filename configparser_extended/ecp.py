@@ -255,7 +255,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
             # If nothing has been found, raise an exception
             raise NoOptionError(option, section)
 
-        if(isList):
+        if(isList and result is not fallback):
             result = self.convert_value_list(result)
         return result
 
@@ -486,7 +486,13 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """ Returns the value of an option as an integer. """
 
         res = self.get(section, option, raw, vars, fallback)
-        res = int(res)
+        try:
+            res = int(res)
+        except ValueError:
+            if res is fallback:
+                pass
+            else:
+                raise
         return res
 
     def getfloat(self, section, option, raw=False, vars=None,
@@ -494,7 +500,13 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """ Returns the value of an option as an double. """
 
         res = self.get(section, option, raw, vars, fallback)
-        res = float(res)
+        try:
+            res = float(res)
+        except ValueError:
+            if res is fallback:
+                pass
+            else:
+                raise
         return res
 
     def getboolean(self, section, option, raw=False, vars=None,
@@ -502,7 +514,13 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """ Returns the value of an option as a boolean. """
 
         res = self.get(section, option, raw, vars, fallback)
-        res = self.str_to_bool(res)
+        try:
+            res = self.str_to_bool(res)
+        except ValueError:
+            if res is fallback:
+                pass
+            else:
+                raise
         return res
 
     def getintlist(self, section, option, raw=False, vars=None,
@@ -510,7 +528,13 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """ Returns the value of an option as an integer list. """
 
         res = self.get(section, option, raw, vars, fallback, isList=True)
-        res = [int(i) for i in res]
+        try:
+            res = [int(i) for i in res]
+        except ValueError:
+            if res is fallback:
+                pass
+            else:
+                raise
         return res
 
     def getfloatlist(self, section, option, raw=False, vars=None,
@@ -518,7 +542,13 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """ Returns the value of an option as an double list. """
 
         res = self.get(section, option, raw, vars, fallback, isList=True)
-        res = [float(i) for i in res]
+        try:
+            res = [float(i) for i in res]
+        except ValueError:
+            if res is fallback:
+                pass
+            else:
+                raise
         return res
 
     def getbooleanlist(self, section, option, raw=False, vars=None,
@@ -526,7 +556,13 @@ class ExtendedConfigParser(configparser.ConfigParser):
         """ Returns the value of an option as a boolean list. """
 
         res = self.get(section, option, raw, vars, fallback, isList=True)
-        res = [self.str_to_bool(i) for i in res]
+        try:
+            res = [self.str_to_bool(i) for i in res]
+        except ValueError:
+            if res is fallback:
+                pass
+            else:
+                raise
         return res
 
     def str_to_bool(self, string):
@@ -542,7 +578,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
              string == '0'):
             return False
         else:
-            raise ValueError(string)
+            raise ValueError(string + " is not a boolean")
 
     def get_config_name(self):
         return self.config_name
