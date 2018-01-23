@@ -554,7 +554,7 @@ class AdvancedTestCase(unittest.TestCase):
     def test_get_config_section_loop_list(self):
         self.assertEqual(self.x.get('sect2', 'key173', sect_first=False,
                                     fallback='SCP-173', isList=True),
-                         ['SCP-173'])
+                         'SCP-173')
 
     def test_get_kwargs(self):
         self.x = ExtendedConfigParser(config='dev',
