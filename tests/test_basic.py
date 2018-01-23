@@ -50,8 +50,15 @@ class BasicTestCase(unittest.TestCase):
     def test_get_boolean_false(self):
         self.assertFalse(self.x.getboolean('sect1', 'key_bool5'))
 
+    # Wrong type
     def test_get_boolean_random(self):
         self.assertRaises(ValueError, self.x.getboolean, 'sect1', 'key_bool6')
+
+    def test_get_list_int_wrong_type(self):
+        self.assertRaises(ValueError, self.x.getint, 'sect1', 'key_bool6')
+
+    def test_get_list_float_wrong_type(self):
+        self.assertRaises(ValueError, self.x.getfloat, 'sect1', 'key_bool6')
 
     def test_default(self):
         self.assertEqual(self.x.get('sect3', 'key2'), 'default2')
@@ -86,6 +93,18 @@ class BasicTestCase(unittest.TestCase):
         x.read('./test_cfg.ini')
         self.assertEqual(x.get('sect_does_not_exsist', 'key173',
                                fallback=None), None)
+
+    def test_fallback_int_wrong_type(self):
+        self.assertEqual(self.x.getint('sect1', 'key173',
+                                       fallback="not_an_int"), "not_an_int")
+
+    def test_fallback_float_wrong_type(self):
+        self.assertEqual(self.x.getfloat('sect1', 'key173',
+                         fallback="not_a_float"), "not_a_float")
+
+    def test_fallback_bool_wrong_type(self):
+        self.assertEqual(self.x.getboolean('sect1', 'key173',
+                         fallback="not_a_bool"), "not_a_bool")
 
     def test_has_section(self):
         self.assertTrue(self.x.has_section('sect2'))
@@ -428,11 +447,23 @@ class AdvancedTestCase(unittest.TestCase):
         res = [0.96, 1.73, 6.82]
         self.assertEqual(self.x.getfloatlist('sect1', 'key_list_float'), res)
 
+    def test_get_list_int_wrong_type(self):
+        self.assertRaises(ValueError, self.x.getintlist, 'sect1',
+                          'key_list')
+
+    def test_get_list_bool_wrong_type(self):
+        self.assertRaises(ValueError, self.x.getbooleanlist, 'sect1',
+                          'key_list')
+
+    def test_get_list_float_wrong_type(self):
+        self.assertRaises(ValueError, self.x.getfloatlist, 'sect1',
+                          'key_list')
+
     def test_get_fallback_list(self):
         # If not found in the section or parents (tests list for defaults,
         # fallback, father,...)
         self.assertEqual(self.x.get('sect1', 'key173', fallback='deez',
-                                    isList=True), ['deez'])
+                                    isList=True), 'deez')
 
     def test_get_father(self):
         self.x = ExtendedConfigParser(defaults={'key4': 'father'})
