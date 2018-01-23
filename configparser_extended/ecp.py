@@ -178,7 +178,7 @@ class ExtendedConfigParser(configparser.ConfigParser):
             # If nothing has been found, raise an exception
             raise NoOptionError(option, section)
 
-        if(isList):
+        if(isList and result is not fallback):
             result = self.convert_value_list(result)
         return result
 
