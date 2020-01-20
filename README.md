@@ -1,13 +1,6 @@
 # configparser_extended
 
-**WARNING : it is STRONGLY advised to read the original ConfigParser documentation if you're a beginner**
-
-## Status (master branch)
-
-[![Build Status](https://travis-ci.org/thefab/configparser_extended.png)](https://travis-ci.org/thefab/configparser_extended)
-[![Coverage Status](https://coveralls.io/repos/thefab/configparser_extended/badge.png)](https://coveralls.io/r/thefab/configparser_extended)
-[![Code Health](https://landscape.io/github/thefab/configparser_extended/master/landscape.png)](https://landscape.io/github/thefab/configparser_extended/master)
-[![Requirements Status](https://requires.io/github/thefab/configparser_extended/requirements.png?branch=master)](https://requires.io/github/thefab/configparser_extended/requirements/?branch=master)
+**WARNING: this project is replaced by [opinionated_configparser](https://github.com/metwork-framework/opinionated_configparser)**
 
 ## What is it ?
 
